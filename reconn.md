@@ -114,5 +114,5 @@ our 64³ run already reproduces the mid-plane current layer and merge (see
 |---|---|---|
 | Necklace of secondary rings | azimuthal mode spectrum at the collision annulus | grid m=4 only before noise seeding; 96³ noise-seeded run in progress |
 | Iterated cascade (rings³) | mode spectrum vs time + frame videos | — |
-| Writhe→twist helicity flow | anapole moment |T|(t), field-line twist | |T| ≈ 0 so far |
+| Writhe→twist helicity flow | anapole (toroidal) moment |T|(t) — zero for a plain ring, nonzero for coil-of-coils winding | anapole stayed at machine zero in the 64³ (pre-noise) runs |
 | Counter-helicity merge → FRC | mid-plane current sheet, m_z survival | reproduced at 64³ |
