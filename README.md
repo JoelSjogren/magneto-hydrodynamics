@@ -327,16 +327,21 @@ left panel: log₁₀|B| on a fixed 3.5-decade scale, right panel: electron
 density; xz-slice through the torus). Rendered inline during the simulation,
 stitched with `scripts/make_videos.sh`:
 
-- [k = 0, bare current ring — τ ≈ 276/ω_p](out/videos/phase3_k0_ball.mp4)
-- [k = 1, coil (16 turns) — τ ≈ 125/ω_p](out/videos/phase3_k1_ball.mp4)
-- [k = 2, coil of coils (16×8) — τ ≈ 74/ω_p](out/videos/phase3_k2_ball.mp4)
+Full-quality mp4s: [k = 0, bare current ring — τ ≈ 276/ω_p](out/videos/phase3_k0_ball.mp4)
+· [k = 1, coil (16 turns) — τ ≈ 125/ω_p](out/videos/phase3_k1_ball.mp4)
+· [k = 2, coil of coils (16×8) — τ ≈ 74/ω_p](out/videos/phase3_k2_ball.mp4)
 
-<video src="out/videos/phase3_k0_ball.mp4" controls loop width="49%"></video>
-<video src="out/videos/phase3_k1_ball.mp4" controls loop width="49%"></video>
-<video src="out/videos/phase3_k2_ball.mp4" controls loop width="49%"></video>
+**k = 0** (τ ≈ 276/ω_p):
 
-(The inline players work in the local `preview.html`; on GitHub use the links
-above.)
+![k=0 ball-mode relaxation](out/videos/phase3_k0_ball.gif)
+
+**k = 1** (τ ≈ 125/ω_p):
+
+![k=1 ball-mode relaxation](out/videos/phase3_k1_ball.gif)
+
+**k = 2** (τ ≈ 74/ω_p):
+
+![k=2 ball-mode relaxation](out/videos/phase3_k2_ball.gif)
 
 ## 5. Implementation provenance
 

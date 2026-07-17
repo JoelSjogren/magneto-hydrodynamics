@@ -3,6 +3,7 @@
 out/**
 !out/**/
 !out/videos/*.mp4
+!out/videos/*.gif
 !out/**/*.csv
 
 Manifest.toml
