@@ -15,24 +15,19 @@ real fluid dynamics: two counter-rotating vortex rings collide head-on,
 stretch into a thin annulus, go azimuthally unstable, and **reconnect into
 a necklace of small secondary rings** that fly off radially.
 
-- **Simulation of the Lim & Nickels configuration** (watch the necklace
-  form at the end):
+- **Simulation of the Lim & Nickels configuration** — watch the necklace
+  form at the end ([direct link](https://www.youtube.com/watch?v=Qxr7tsZUy1c)):
 
   <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Qxr7tsZUy1c" title="Head-on vortex ring collision" frameborder="0" allowfullscreen></iframe>
 
-  Link: [Head-on vortex ring collision (YouTube)](https://www.youtube.com/watch?v=Qxr7tsZUy1c)
 - Original experiment: T. T. Lim & T. B. Nickels, *Instability and
   reconnection in the head-on collision of two vortex rings*, Nature 357,
-  225 (1992).
-- Animated-GIF treatments at FYFD:
-  [Vortex Ring Collisions (2018)](https://fyfluiddynamics.com/2018/07/one-of-the-most-enduringly-popular-submissions-i/) ·
-  [Vortex Ring Collision (2012)](https://fyfluiddynamics.com/2012/01/two-vortex-rings-collide-head-on-in-this-video-if/)
-- The famous SmarterEveryDay slow-motion water-tank realization, with
-  build details: [When Vortex Rings Collide (Hackaday writeup + embedded video)](https://hackaday.com/2018/06/22/when-vortex-rings-collide/) ·
-  [Boing Boing writeup](https://boingboing.net/2018/06/22/watch-this-absolutely-glorious.html)
-- Numerical anatomy of the same event: [*A Cascade Leading to the
-  Emergence of Small Structures in Vortex Ring Collisions* (arXiv
-  1802.09973, figures viewable in-browser)](https://ar5iv.labs.arxiv.org/html/1802.09973)
+  225 (1992) — animated-GIF summary at
+  [FYFD](https://fyfluiddynamics.com/2018/07/one-of-the-most-enduringly-popular-submissions-i/).
+- Slow-motion water-tank realization:
+  [SmarterEveryDay, via Hackaday (build details + video)](https://hackaday.com/2018/06/22/when-vortex-rings-collide/).
+- Numerical anatomy: [*A Cascade Leading to the Emergence of Small
+  Structures in Vortex Ring Collisions* (arXiv 1802.09973)](https://ar5iv.labs.arxiv.org/html/1802.09973)
 
 **Relevance to v2:** this is scenario `limnickels`. The azimuthal mode
 counter in our diagnostics (`azimuthal_spectrum`) is meant to detect
