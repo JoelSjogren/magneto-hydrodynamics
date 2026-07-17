@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>magneto-hydrodynamics — run dashboard</title>
+<style>
+  body { font-family: sans-serif; margin: 0; background: #14161a; color: #d8dce2; }
+  header { padding: 10px 18px; background: #1c1f26; display: flex; gap: 14px;
+           align-items: center; flex-wrap: wrap; }
+  header a { color: #7ab7ff; text-decoration: none; }
+  select, button, label { font-size: 14px; }
+  select { background: #262a33; color: #d8dce2; border: 1px solid #3a3f4b;
+           padding: 4px 8px; border-radius: 4px; }
+  main { display: flex; flex-wrap: wrap; gap: 18px; padding: 18px; }
+  .panel { background: #1c1f26; border-radius: 8px; padding: 14px; }
+  #frameimg { max-width: 640px; width: 100%; image-rendering: auto;
+              background: #000; border-radius: 4px; }
+  #slider { width: 100%; }
+  #status { color: #9aa3b0; font-size: 13px; margin-top: 6px; }
+  canvas { background: #101216; border-radius: 4px; }
+  .cols label { margin-right: 10px; font-size: 13px; }
+  h3 { margin: 2px 0 10px; font-size: 15px; color: #aeb6c2; }
+</style>
+</head>
+<body>
+<header>
+  <b>run dashboard</b>
+  <select id="runsel"></select>
+  <select id="streamsel"><option value="frames">2D slices</option></select>
+  <label><input type="checkbox" id="live" checked> follow live</label>
+  <label><input type="checkbox" id="logy" checked> log y</label>
+  <span id="poller" style="color:#9aa3b0;font-size:12px"></span>
+  <a href="preview.html">README</a>
+  <a href="out/videos/">videos</a>
+</header>
+<main>
+  <div class="panel" style="flex:1;min-width:420px">
+    <h3>frames <span id="framelabel"></span></h3>
+    <img id="frameimg" alt="frame">
+    <input type="range" id="slider" min="0" max="0" value="0">
+    <div id="status">scanning…</div>
+  </div>
+  <div class="panel" style="flex:1;min-width:480px">
+    <h3>time series</h3>
+    <div class="cols" id="cols"></div>
+    <canvas id="chart" width="640" height="380"></canvas>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const COLORS = ['#4fa3ff','#ff6b57','#7ad151','#e8c547','#c77dff','#4dd0c4'];
+let runs = [], frames = [], csv = null, enabled = {};
+
+async function listing(path) {
+  try {
+    const r = await fetch(path, {cache:'no-store'});
+    if (!r.ok) return [];
+    const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
+    return [...doc.querySelectorAll('a')].map(a => a.getAttribute('href'));
+  } catch { return []; }
+}
+
+async function scanRuns() {
+  const found = [];
+  for (const base of ['out/v2/', 'out/phase3/']) {
+    for (const h of await listing(base)) {
+      if (!h.endsWith('/')) continue;
+      const sub = await listing(base + h);
+      if (sub.some(x => x === 'frames/' || x.startsWith('frame_')))
+        found.push(base + h);
+      // phase3/N*/frames/<k>/ layout
+      if (h.startsWith('N') && sub.includes('frames/')) {
+        for (const kk of await listing(base + h + 'frames/'))
+          if (kk.endsWith('/')) found.push(base + h + 'frames/' + kk);
+      }
+    }
+  }
+  return found;
+}
+
+function runFramesPath() {
+  const run = $('runsel').value;
+  const stream = $('streamsel').value;
+  if (run.includes('/frames/')) return run;          // phase3 leaf dir
+  return run + stream + '/';
+}
+function runCsvPath() {
+  const run = $('runsel').value;
+  if (run.includes('/frames/')) {                     // phase3: sibling csv
+    const m = run.match(/^(.*)frames\/(k\d+)_(\w+)\/$/);
+    return m ? `${m[1]}timeseries_${m[2]}_${m[3]}.csv` : null;
+  }
+  return run + 'timeseries.csv';
+}
+
+async function refreshFrames(keepPos) {
+  const dir = runFramesPath();
+  const fs = (await listing(dir)).filter(h => h.endsWith('.png')).sort();
+  const atEnd = +$('slider').value >= frames.length - 1;
+  frames = fs;
+  $('slider').max = Math.max(0, fs.length - 1);
+  if (($('live').checked && atEnd) || !keepPos) $('slider').value = fs.length - 1;
+  showFrame();
+  $('status').textContent = `${fs.length} frames in ${dir}`;
+}
+function showFrame() {
+  const i = +$('slider').value;
+  if (frames[i]) {
+    $('frameimg').src = runFramesPath() + frames[i];
+    $('framelabel').textContent = `— ${frames[i]} (${i+1}/${frames.length})`;
+  }
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split('\n');
+  const head = lines[0].split(',');
+  const cols = Object.fromEntries(head.map(h => [h, []]));
+  for (const l of lines.slice(1)) {
+    const v = l.split(',');
+    head.forEach((h, i) => cols[h].push(parseFloat(v[i])));
+  }
+  return {head, cols};
+}
+
+async function refreshCsv() {
+  const p = runCsvPath();
+  if (!p) { csv = null; drawChart(); return; }
+  try {
+    const r = await fetch(p, {cache:'no-store'});
+    if (!r.ok) { csv = null; drawChart(); return; }
+    csv = parseCsv(await r.text());
+    const box = $('cols');
+    if (box.dataset.for !== p) {
+      box.dataset.for = p;
+      box.innerHTML = '';
+      csv.head.slice(1).forEach((h, i) => {
+        const on = enabled[h] ?? (i < 4);
+        enabled[h] = on;
+        const lab = document.createElement('label');
+        lab.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}> <span style="color:${COLORS[i % COLORS.length]}">${h}</span>`;
+        lab.querySelector('input').onchange = e => { enabled[h] = e.target.checked; drawChart(); };
+        box.appendChild(lab);
+      });
+    }
+  } catch { csv = null; }
+  drawChart();
+}
+
+function drawChart() {
+  const c = $('chart'), g = c.getContext('2d');
+  g.fillStyle = '#101216'; g.fillRect(0, 0, c.width, c.height);
+  if (!csv) { g.fillStyle = '#666'; g.fillText('no timeseries.csv', 20, 30); return; }
+  const logy = $('logy').checked;
+  const t = csv.cols[csv.head[0]];
+  const act = csv.head.slice(1).filter(h => enabled[h]);
+  let vals = [];
+  for (const h of act) vals = vals.concat(csv.cols[h].filter(v => isFinite(v) && (!logy || v > 0)));
+  if (!vals.length) return;
+  const ty = v => logy ? Math.log10(v) : v;
+  let ymin = Math.min(...vals.map(ty)), ymax = Math.max(...vals.map(ty));
+  if (ymax === ymin) ymax += 1;
+  const ml = 56, mb = 28, mt = 10, mr = 10;
+  const X = x => ml + (x - t[0]) / (t[t.length-1] - t[0] || 1) * (c.width - ml - mr);
+  const Y = v => mt + (c.height - mt - mb) * (1 - (ty(v) - ymin) / (ymax - ymin));
+  g.strokeStyle = '#2a2e38'; g.fillStyle = '#9aa3b0'; g.font = '11px sans-serif';
+  const ticks = logy
+    ? Array.from({length: Math.floor(ymax) - Math.ceil(ymin) + 1}, (_, i) => Math.pow(10, Math.ceil(ymin) + i))
+    : Array.from({length: 5}, (_, i) => ymin + i / 4 * (ymax - ymin));
+  for (const v of ticks) {
+    const y = Y(logy ? v : v);
+    g.beginPath(); g.moveTo(ml, y); g.lineTo(c.width - mr, y); g.stroke();
+    g.fillText(logy ? v.toExponential(0) : v.toPrecision(2), 4, y + 4);
+  }
+  for (let q = 0; q <= 5; q++) {
+    const x = ml + q / 5 * (c.width - ml - mr);
+    g.fillText((t[0] + q / 5 * (t[t.length-1] - t[0])).toFixed(1), x - 8, c.height - 8);
+  }
+  act.forEach((h, i) => {
+    g.strokeStyle = COLORS[csv.head.slice(1).indexOf(h) % COLORS.length];
+    g.lineWidth = 1.8; g.beginPath();
+    let started = false;
+    csv.cols[h].forEach((v, j) => {
+      if (!isFinite(v) || (logy && v <= 0)) return;
+      const x = X(t[j]), y = Y(v);
+      started ? g.lineTo(x, y) : g.moveTo(x, y); started = true;
+    });
+    g.stroke();
+  });
+}
+
+async function switchRun(keepPos) {
+  const run = $('runsel').value;
+  const has3d = !run.includes('/frames/') &&
+                (await listing(run)).includes('frames3d/');
+  const ss = $('streamsel');
+  const want = ss.value;
+  ss.innerHTML = '<option value="frames">2D slices</option>' +
+                 (has3d ? '<option value="frames3d">3D volume</option>' : '');
+  if ([...ss.options].some(o => o.value === want)) ss.value = want;
+  await refreshFrames(keepPos);
+  await refreshCsv();
+}
+
+(async () => {
+  runs = await scanRuns();
+  $('runsel').innerHTML = runs.map(r => `<option value="${r}">${r.replace('out/','')}</option>`).join('');
+  if (runs.length) { $('runsel').value = runs[runs.length - 1]; await switchRun(false); }
+  $('runsel').onchange = () => switchRun(false);
+  $('streamsel').onchange = () => refreshFrames(false);
+  $('slider').oninput = showFrame;
+  $('logy').onchange = drawChart;
+  setInterval(async () => {
+    $('poller').textContent = 'updated ' + new Date().toLocaleTimeString();
+    await refreshFrames(true);
+    await refreshCsv();
+  }, 5000);
+})();
+</script>
+</body>
+</html>

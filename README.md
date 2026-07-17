@@ -429,3 +429,198 @@ compatibility).
 - Rañada & Trueba, Nature 383, 32 (1996); Rañada, Soler & Trueba, Phys. Rev. E 62, 7181 (2000).
 - Bostick, Phys. Rev. 106, 404 (1957).
 - Ken Shoulders, "EV — A Tale of Discovery" (1987); US Patent 5,018,180.
+
+## 7. v2 plan: fluid MHD and self-assembly from counter-rotating tori
+
+v1 established what the cold, collisionless, frozen-ion model does with a
+*hand-built* fractal coil: anapole + helicity switch on, far field stays
+dipolar, and every nesting level shortens the life of the object (τ ≈ 249,
+127, 37/ω_p at 144³, k = 2 unconverged and falling). v2 changes two things,
+both motivated by a closer reading of the claims.
+
+### 7.1 Motivation
+
+1. **The setting should be fluid, not near-solid.** The source vocabulary is
+   magneto-*hydro*-dynamics and vortices, and days-long persistence after
+   removal of the apparatus implies a self-carrying lump of matter, not
+   charges electrostatically clamped to a frozen background as in v1 (whose
+   ion lattice made it behave like a charged solid). v2 moves to a
+   single-fluid quasineutral visco-resistive MHD model: the matter itself
+   flows, vortices are first-class objects, and decay happens by
+   reconnection and resistive diffusion instead of collisionless phase
+   mixing.
+2. **The fractal should emerge, not be imposed.** Verified against the
+   sources (see 7.2): Greenyer's central formation claim is *self-assembly*
+   from simple beginnings — a collapsing ionized bubble forming **two
+   counter-rotating vortices** with a "zero point" equilibrium plane between
+   them, and EVOs then linking "into filaments and larger self-similar
+   rings", which "further cluster into rings of rings". v1 built the coil of
+   coils by hand; v2 asks whether anything like it self-assembles from a
+   two-torus initial condition.
+
+### 7.2 What the sources actually claim about formation
+
+- Two counter-rotating vortices from symmetric cavitation collapse, with a
+  "zero point" plane between them (Thunderstorm-Generator orbit of MFMP:
+  <https://alchemicalscience.org/thunderstorm-generator-q-a-more-proof-of-cavitation-from-mfmp-plasmoid-tech-updates/>).
+- The EVO core as a toroidal "vortex/counter-vortex" configuration
+  (<https://www.altpropulsion.com/decoding-evos-a-deep-dive-into-exotic-vacuum-objects/>).
+- Hierarchical clustering: EVOs link along their axis into filaments and
+  self-similar rings, then "rings of rings" ("THOR — Outside of the Inside":
+  <https://remoteview.substack.com/p/thor-outside-of-the-inside>; the axial
+  link is attributed to a relic-neutrino beam — out of classical scope, we
+  test what plain MHD does).
+- "Charge separation and turbulence is critical for formation", with
+  acoustic/ion-acoustic resonance as an organizing factor (same THOR post).
+  Charge separation is inaccessible to single-fluid MHD — noted as a v3
+  direction (Hall or two-fluid MHD).
+
+Mainstream anchors that make self-assembly a fair, testable question:
+head-on collision of counter-rotating vortex rings breaks up, via azimuthal
+instability, into a **ring of secondary small rings** (Lim & Nickels, Nature
+357, 225 (1992)) — literally "ring → ring of rings" in an ordinary fluid;
+laboratory merging of two spheromaks self-organizes into new objects, with
+outcome controlled by relative helicity sign (counter-helicity → FRC:
+Yamada, Ono et al., TS-3 experiments, PRL 65, 721 (1990); Ono et al. 1993);
+kink instability converts twist into writhe, i.e. turns an over-twisted flux
+ring into a helix — a generic mechanism for spontaneous "coiling of a coil";
+Taylor relaxation constrains what any of this can settle into.
+
+### 7.3 v2 model equations
+
+Single-fluid, quasineutral, compressible, visco-resistive MHD in Alfvén
+units (B₀, ρ₀, v_A = B₀/√(μ₀ρ₀); lengths in R₀, time in R₀/v_A):
+
+$$
+\partial_t \rho + \nabla\cdot(\rho\mathbf{v}) = 0
+$$
+
+$$
+\partial_t(\rho\mathbf{v}) + \nabla\cdot\left[\rho\mathbf{v}\mathbf{v}
+ + \left(p + \tfrac{B^2}{2}\right)\mathbf{I} - \mathbf{B}\mathbf{B}\right]
+ = \mu\,\nabla^2\mathbf{v}
+$$
+
+$$
+\partial_t\mathbf{B} = \nabla\times(\mathbf{v}\times\mathbf{B})
+ + \eta\,\nabla^2\mathbf{B}, \qquad p = c_s^2\,\rho \;\text{(isothermal)}
+$$
+
+with hyperbolic (GLM/Dedner) divergence cleaning. Dimensionless knobs:
+Lundquist number S = 1/η (resistive lifetime = S in code units), sound ratio
+c_s/v_A (plasma β), optional explicit viscosity μ (Rusanov dissipation
+otherwise), ambient density floor ρ_amb ≈ 10⁻² (standard stand-in for
+vacuum). Honest persistence calibration up front: τ_resistive = μ₀σL², so
+2 days at L = 1 cm needs σ ≈ 10¹⁵ S/m ≈ 2×10⁷ × copper — i.e. effectively
+superconducting coherence; classical MHD can only tell us the *shape* of the
+decay and its S-scaling, which we extrapolate.
+
+### 7.4 The two experiment paths
+
+**Path A — fluid re-run of v1 (fractal imposed, fluid physics).** Fractal
+coil field from the v1 Biot–Savart generator, density blob following the
+tube, v = 0 (in MHD the current is carried by ∇×B; no seeded flow needed).
+Measures τ(k) again where the decay channels are reconnection + resistivity.
+Sharp question: does the nested coil reconnect internally into a plain torus
+(Taylor relaxation predicts helicity-preserving simplification), and does
+τ(k) still fall with k?
+
+**Path B — self-assembly from two tori (the genesis claim).** A
+two-parameter family of double-ring initial conditions, each ring built from
+a vector potential (∇·B = 0 by construction) with core radius a, major
+radius R, separation d, and a twist parameter; plus optional hydrodynamic
+vortex-ring velocity of either sense:
+
+1. *Counter-helicity magnetic ring pair* (co-directed ring currents,
+   opposite toroidal field): laboratory analogue merges into an FRC — also
+   our code-validation case against known phenomenology.
+2. *Opposed ring currents* pushed together by initial inflow: forced
+   reconnection between "two toruses with opposing currents".
+3. *Counter-rotating hydrodynamic vortex rings in head-on collision* with a
+   weak frozen-in seed field: the Lim–Nickels configuration. The v2
+   headline question: do the secondary rings inherit twisted flux — i.e.
+   does a **ring of magnetized sub-rings (a 2-level FTM) self-assemble**?
+
+### 7.5 Diagnostics and falsifiable outcomes
+
+Magnetic, kinetic, and cross helicity budgets; energy partition; dipole
+m(t) and anapole T(t) — self-assembly of an FTM would announce itself as
+growth of |T| from an initial condition with |T| ≈ 0; azimuthal mode
+spectrum of current/vorticity density on the mid-plane (counts the number of
+self-assembled sub-rings, comparable to Lim–Nickels mode numbers); field-line
+tracing for twist/writhe; lifetime vs Lundquist number τ(S) at fixed
+geometry, extrapolated toward the 2-day requirement. Outcomes that would
+*support* the claim: spontaneous |T| growth, sub-ring formation with
+inherited twist, τ growing faster than linearly in S. Outcomes that would
+*refute* it in this model family: azimuthal breakup without magnetic
+nesting, monotone helicity-preserving simplification to a single torus,
+τ ∝ S or slower.
+
+### 7.6 First v2 results
+
+Implementation notes that turned out to matter: plain first-order Rusanov
+destroyed the few-cell ring cores within an Alfvén time, so the fluxes use
+MUSCL/minmod reconstruction (second-order); and the toroidal (twist)
+component of the flux rings must also be built from a vector potential or
+its *discrete* divergence pollutes the run.
+
+64³ scenario suite (S = 500, t = 15 Alfvén times, videos in `out/videos/`):
+
+- **No spontaneous anapole moment in any scenario**: |T| stays at machine
+  zero throughout. Cause identified: the two-ring initial conditions are
+  axisymmetric, and a clean grid gives azimuthal instabilities nothing
+  physical to grow from — the azimuthal mode spectrum reads back the
+  Cartesian grid's own m = 4 anisotropy (m = 8 harmonic in the vortex-ring
+  collision) at the few-percent level. Lesson: the Lim–Nickels breakup is
+  noise-seeded in real fluids, so the simulation must seed symmetry-breaking
+  noise explicitly (added: 2% random velocity noise, deterministic seed).
+- *counterhel* reproduces merging phenomenology: the rings attract, drive a
+  current layer at the mid-plane, and reconnect into a single object with
+  surviving net dipole (m_z ≈ 0.26); magnetic energy drops ~100× by t = 15
+  (reconnection + residual numerical diffusion at 3-cell cores).
+- *opposed*: the anti-parallel ring currents annihilate; the net dipole
+  cancels to grid zero.
+- *limnickels*: kinetic energy decays ~60× with the seed field passively
+  advected; no magnetized sub-rings without noise seeding.
+
+96³ noise-seeded runs (2% velocity noise, t = 18, videos
+`v2_*_N96*.mp4`): **reconnection does spontaneously generate anapole
+current structure — the first self-assembly signal of the project — but at
+the sub-percent level.**
+
+- *limnickels*: |T| grows smoothly from machine zero (7×10⁻¹⁷) to
+  3.6×10⁻⁴, saturating by t ≈ 10 and holding; the weak seed field is wound
+  into a net dipole (m_z: 4×10⁻⁶ → 0.07); the collision annulus breaks up
+  at azimuthal mode m = 4 with relative amplitudes up to ~0.5 — well above
+  the unseeded grid-anisotropy floor, though m = 4 is also the grid's
+  preferred symmetry, so the mode *number* needs a rotated-IC or
+  higher-resolution cross-check before it is trusted.
+- *counterhel*: a transient anapole peaks at ~1.2×10⁻⁴ around t ≈ 8
+  (mid-merge) and relaxes to ~1×10⁻⁴; the merged object keeps a slowly
+  decaying dipole m_z ≈ 0.28. First 3D volume-rendered video stream
+  (`v2_counterhel_N96_3d.mp4`).
+- Time-series plots (SVG, from `scripts/plot_anapole.jl`):
+  ![anapole growth](out/plots/anapole_T.svg)
+  ![dipole winding](out/plots/dipole_mz.svg)
+- Scale honesty: the self-assembled anapole fraction is |T|/|m| ≈ 0.6%
+  (limnickels) and ~0.04% (counterhel), versus ~50% for the hand-built v1
+  fractal coil. Self-assembly of *weak* FTM character from anapole-free
+  initial conditions: observed. Self-assembly of an actual fractal
+  toroid: not at these parameters — the follow-up knobs are stronger seed
+  field, higher resolution, and longer runs to test whether the saturated
+  |T| is a plateau or a slow-growth phase.
+
+### 7.7 Numerical plan and reuse
+
+New module `src/mhd.jl` (state: ρ, ρv, B, ψ — 8 cell-centered fields;
+Rusanov/HLL fluxes with fast-magnetosonic wave speed; GLM cleaning; explicit
+resistive/viscous terms), driven by the existing SSP-RK3 harness. Reused
+unchanged: `Box`, sponge layer, PNG writer, inline frame rendering, video
+stitcher, moment/helicity diagnostics, fractal-coil generator (path A and
+the ring construction). v1 code stays untouched; v2 scripts are
+`scripts/v2_*.jl`. Validation tests before experiments: circularly polarized
+Alfvén wave (exact solution, speed + resistive damping rate γ = ηk²),
+magnetic-loop advection (∇·B control), hydrodynamic vortex-ring
+self-propagation, and the counter-helicity merging → FRC phenomenology
+check. Same GPU trajectory as v1 (the 8-field cell-centered layout is, if
+anything, more CUDA-friendly than the staggered v1 grid).

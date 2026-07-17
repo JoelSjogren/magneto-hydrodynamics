@@ -22,7 +22,11 @@ for dir in out/phase3/frames/*/ out/phase3/N*/frames/*/ out/v2/*/frames/ out/v2/
     frames=("$dir"frame_*.png)
     ((${#frames[@]})) || continue
     found=1
-    out="out/videos/phase3_${run}.mp4"
+    if [[ $run == v2_* ]]; then
+        out="out/videos/${run}.mp4"
+    else
+        out="out/videos/phase3_${run}.mp4"
+    fi
     echo ">> $run: ${#frames[@]} frames -> $out"
     ffmpeg -y -loglevel error -framerate "$fps" \
         -i "${dir}frame_%05d.png" \
