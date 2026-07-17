@@ -19,13 +19,18 @@ export Curve, fractal_coil, segments, frames, npoints,
        div_B, div_E, ssprk3!, _wrap,
        FluidSim, step!, coupled_rhs!, marder_clean!, kinetic_energy,
        gauss_residual,
-       efold_time, powerlaw_slope
+       efold_time, powerlaw_slope,
+       MRHO, MMX, MMY, MMZ, MBX, MBY, MBZ, MPSI,
+       MHDSim, mhd_step!, mhd_rhs!, mhd_kinetic_energy, mhd_magnetic_energy,
+       curl_central, grid_moments, azimuthal_spectrum,
+       add_flux_ring!, add_vortex_ring!
 
 include("geometry.jl")
 include("fields.jl")
 include("png.jl")
 include("yee.jl")
 include("fluid.jl")
+include("mhd.jl")
 include("diagnostics.jl")
 
 end
