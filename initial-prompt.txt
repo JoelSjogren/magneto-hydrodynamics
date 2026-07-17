@@ -1,0 +1,11 @@
+;; This buffer is for text that is not saved, and for Lisp evaluation.
+;; To create a file, visit it with ‘C-x C-f’ and enter text in its buffer.
+
+ I would like to start a project in this directory, whose aim is to reproduce by numerical continuum field simulation, the fractal magnetic moment advocated by Bob Greenyer in the MFMP. First we need to figure out what the equations
+  might be. I think he refers to the movement of "relic neutrinos" but not sure - I think it has to be the movement of some charged matter (this would be the current term in Maxwell's equations). The fractal toroid aspect refers to a
+  coil of coils, or a "wheel within a wheel within a wheel", as Bob puts it. For programming we may end up using C++, Rust, Julia or any other high performance language. It would be especially attractive to be able to run it on a GPU
+  using for example CUDA. I have a gtx 1080 card with 8GB of RAM on another machine which we could use when the time comes to run the real thing. For now, start by making a README file where you recapitulate what I just told you, and
+  then make another section where you do some research into Bob's written publications (any blog entry or conference pdf would be potentially as good as conventional "peer-reviewed papers"), and then you make another section where you
+  based on this propose the simplest possible set of continuum equations that could reproduce this fractal toroid kind of magnetic monopole thingy that Bob is so enthused about, perhaps by instantiating Maxwell's equations with a
+  definite specification of how the current is given by the movement of massive charge that is accelerated by the electromagnetic field. Since the effect is said to be able to survive for 2 days even after removing the apparatus, it
+  might be that a single phase of matter in a vacuum would be a sufficient model.
