@@ -23,7 +23,8 @@ export Curve, fractal_coil, segments, frames, npoints,
        MRHO, MMX, MMY, MMZ, MBX, MBY, MBZ, MPSI,
        MHDSim, mhd_step!, mhd_rhs!, mhd_kinetic_energy, mhd_magnetic_energy,
        curl_central, grid_moments, azimuthal_spectrum,
-       add_flux_ring!, add_vortex_ring!
+       add_flux_ring!, add_vortex_ring!,
+       volume_render
 
 include("geometry.jl")
 include("fields.jl")
@@ -31,6 +32,7 @@ include("png.jl")
 include("yee.jl")
 include("fluid.jl")
 include("mhd.jl")
+include("volren.jl")
 include("diagnostics.jl")
 
 end

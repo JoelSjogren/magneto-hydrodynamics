@@ -55,6 +55,21 @@ else
     error("unknown scenario $SCEN")
 end
 
+# Symmetry-breaking noise: the initial conditions are axisymmetric, and on a
+# clean grid the azimuthal instabilities behind ring breakup (Lim–Nickels)
+# have nothing physical to grow from — without this, the mode spectrum only
+# reads the Cartesian grid's m=4 anisotropy. Deterministic seed.
+using Random
+let rng = Xoshiro(1234)
+    amp = 0.02 * maximum(abs, sim.S[MMZ])
+    for q in (MMX, MMY, MMZ)
+        A = sim.S[q]
+        for idx in eachindex(A)
+            A[idx] += amp * (2rand(rng) - 1)
+        end
+    end
+end
+
 # fixed render scales from the initial state
 Bmag() = sqrt.(sim.S[MBX] .^ 2 .+ sim.S[MBY] .^ 2 .+ sim.S[MBZ] .^ 2)
 function omag()
@@ -93,11 +108,21 @@ function render_frame(nframe)
     save_png(joinpath(OUT, "frames", "frame_$(lpad(nframe, 5, '0')).png"), rgb)
 end
 
+"3D volume render: opacity = |B| (structure), color = |ω| (flow state)."
+function render_frame3d(nframe)
+    img = volume_render(omag(), Bmag(), box; res = 448, chi = OM_HI,
+                        azim = 0.6, elev = 0.45)
+    save_png(joinpath(OUT, "frames3d", "frame_$(lpad(nframe, 5, '0')).png"),
+             img)
+end
+rm(joinpath(OUT, "frames3d"); force = true, recursive = true)
+mkpath(joinpath(OUT, "frames3d"))
+
 println("v2 path B [$SCEN] $(NGRID)³, t_end=$T_END, S=$(1/ETA), ",
         "$(Threads.nthreads()) threads")
 rows = ["t,E_kin,E_mag,mz,Tnorm,Tz,mode_max,mode_amp"]
 nframe = 0
-render_frame(nframe); nframe += 1
+render_frame(nframe); render_frame3d(nframe); nframe += 1
 tnext = FRAME_DT
 m0, T0 = grid_moments(sim)
 @printf("t=0: E_kin=%.4g E_mag=%.4g |T|=%.4g\n",
@@ -118,7 +143,7 @@ while sim.t < T_END
                           mhd_kinetic_energy(sim), mhd_magnetic_energy(sim),
                           m[3], sqrt(sum(abs2, T)), T[3],
                           mmax, rel[mmax]), ","))
-        render_frame(nframe); nframe += 1
+        render_frame(nframe); render_frame3d(nframe); nframe += 1
         tnext += FRAME_DT
     end
 end
