@@ -32,7 +32,7 @@ const FRAME_DT = 0.25       # render a video frame every Δt (0 = off)
 const UP = 4                # frame upscale factor (pixels per cell)
 const GAP = 8               # gap between the |B| and n panels, px
 const NSCALE = 2.5          # density colormap saturates at this value
-const OUT = joinpath(@__DIR__, "..", "out", "phase3")
+const OUT = joinpath(@__DIR__, "..", "out", "phase3", "N$(NGRID)")
 
 mkpath(OUT)
 

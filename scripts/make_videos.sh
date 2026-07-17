@@ -11,8 +11,11 @@ mkdir -p out/videos
 
 shopt -s nullglob
 found=0
-for dir in out/phase3/frames/*/; do
+for dir in out/phase3/frames/*/ out/phase3/N*/frames/*/; do
     run=$(basename "$dir")
+    # prefix resolution-scoped runs (out/phase3/N144/frames/k2_ball -> N144_k2_ball)
+    parent=$(basename "$(dirname "$(dirname "$dir")")")
+    [[ $parent == N* ]] && run="${parent}_${run}"
     frames=("$dir"frame_*.png)
     ((${#frames[@]})) || continue
     found=1
