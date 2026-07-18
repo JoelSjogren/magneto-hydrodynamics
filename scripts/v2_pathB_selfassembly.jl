@@ -2,7 +2,11 @@
 # rings and watch for spontaneous structure: anapole growth |T|(t) and
 # azimuthal breakup mode counts ("ring of rings").
 #
-#   julia -t auto --project=. scripts/v2_pathB_selfassembly.jl [scenario] [ngrid] [t_end] [resume]
+#   julia -t auto --project=. scripts/v2_pathB_selfassembly.jl [scenario] [ngrid] [t_end] [resume] [gpu]
+#
+# The flag "gpu" (any position) runs the solver on the GPU via CUDA, FP64,
+# and errors out if no functional CUDA device is available. Without it the
+# run is always CPU. Diagnostics/rendering stay on the CPU either way.
 #
 # scenarios: counterhel — co-current, counter-helicity magnetic ring pair
 #            opposed    — anti-parallel ring currents forced together
@@ -20,10 +24,19 @@ using Random
 
 Base.exit_on_sigint(false)   # deliver SIGINT as InterruptException
 
-const SCEN = length(ARGS) >= 1 ? ARGS[1] : "counterhel"
-const NGRID = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : 64
-const T_END = length(ARGS) >= 3 ? parse(Float64, ARGS[3]) : 25.0
-const RESUME = length(ARGS) >= 4 && ARGS[4] == "resume"
+const GPU = "gpu" in ARGS
+const POSARGS = filter(a -> a != "gpu", ARGS)
+const SCEN = length(POSARGS) >= 1 ? POSARGS[1] : "counterhel"
+const NGRID = length(POSARGS) >= 2 ? parse(Int, POSARGS[2]) : 64
+const T_END = length(POSARGS) >= 3 ? parse(Float64, POSARGS[3]) : 25.0
+const RESUME = length(POSARGS) >= 4 && POSARGS[4] == "resume"
+
+if GPU
+    @eval using CUDA
+    CUDA.functional() ||
+        error("gpu flag given but CUDA is not functional on this machine")
+    include(joinpath(dirname(pathof(FractalToroid)), "mhd_cuda.jl"))
+end
 const HALF = 2.0
 const R = 0.8
 const A = 0.2
@@ -80,6 +93,8 @@ else
         end
     end
 end
+
+const GSIM = GPU ? MHDCuda.to_gpu(sim) : nothing
 
 _bmag() = sqrt.(sim.S[MBX] .^ 2 .+ sim.S[MBY] .^ 2 .+ sim.S[MBZ] .^ 2)
 function _omag()
@@ -158,6 +173,7 @@ end
 
 "Write timeseries + checkpoint (normal completion and SIGINT both land here)."
 function finish(status)
+    GPU && MHDCuda.download!(sim, GSIM)
     write(joinpath(OUT, "timeseries.csv"), join(rows, "\n") * "\n")
     checkpoint_save(sim, OUT;
                     extra = Dict("logb_hi" => LOGB_HI, "om_hi" => OM_HI,
@@ -178,12 +194,15 @@ end
 write(joinpath(@__DIR__, "..", "out", "v2", "CURRENT"), "$(SCEN)_N$(NGRID)")
 
 println("v2 path B [$SCEN] $(NGRID)³, t: $(round(sim.t, digits=2)) → $T_END, ",
-        "S=$(1/ETA), $(Threads.nthreads()) threads")
+        "S=$(1/ETA), ",
+        GPU ? "CUDA ($(CUDA.name(CUDA.device())))" :
+              "$(Threads.nthreads()) threads")
 try
     while sim.t < T_END
         global tnext
-        mhd_step!(sim)
+        GPU ? MHDCuda.gpu_step!(sim, GSIM) : mhd_step!(sim)
         if sim.t >= tnext
+            GPU && MHDCuda.download!(sim, GSIM)
             Jx, Jy, Jz = curl_central(sim.S[MBX], sim.S[MBY], sim.S[MBZ],
                                       box, sim.ip, sim.im)
             J2 = Jx .^ 2 .+ Jy .^ 2 .+ Jz .^ 2
