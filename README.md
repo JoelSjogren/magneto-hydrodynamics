@@ -124,7 +124,11 @@ isolated plasma/EM object in vacuum, relic-neutrino coupling, transmutation.
 The known obstacle to persistence is the **virial theorem (Shafranov)**: a
 finite blob of classical charged matter + EM field in vacuum, with nothing
 pushing in from outside, has no static equilibrium — it must expand, radiate,
-or fly apart. Any persistence in our model must therefore be *dynamic*
+or fly apart. (The textbook derivation integrates the Maxwell stress tensor
+— field-side bookkeeping — but the conclusion survives charge-side
+reformulation: the virial of the interparticle Coulomb/Ampère forces gives
+the same no-equilibrium result, so the obstacle does not hinge on where one
+locates the energy; cf. neutrinos.md §3.) Any persistence in our model must therefore be *dynamic*
 (inertially/rotationally supported, or a slowly-decaying self-organized
 state). Measuring the decay time — and whether fractal nesting extends it — is
 the central scientific question of this project, and it is falsifiable both
@@ -219,7 +223,14 @@ distribution so the run starts near self-consistency.
 
 - Energies: field $\tfrac{\varepsilon_0}{2}\!\int (E^2 + c^2B^2)$, kinetic
   $\tfrac{m_e}{2}\!\int n u^2$; Poynting flux through the boundary
-  (radiated/lost power).
+  (radiated/lost power). *(Accounting note, cf. neutrinos.md §3: the
+  field-energy density is one bookkeeping convention; the charge-side
+  convention ½∫(ρφ + J·A) gives identical totals wherever sources exist.
+  Our τ metrics localize energy to a core box — a "where" statement that
+  is convention-dependent in principle, though numerically the two agree
+  closely here since B concentrates at the currents. Notably, our
+  radiated-power measurement — energy tallied when the sponge absorbs it
+  — is already absorber-side accounting in the Wheeler–Feynman sense.)*
 - **Magnetic helicity** $H = \int \mathbf{A}\cdot\mathbf{B}\,dV$ — the
   conserved quantity that drives Taylor relaxation toward force-free states.
 - Moments: magnetic dipole $\mathbf{m} = \tfrac12\int \mathbf{r}\times\mathbf{J}\,dV$,
@@ -624,3 +635,34 @@ magnetic-loop advection (∇·B control), hydrodynamic vortex-ring
 self-propagation, and the counter-helicity merging → FRC phenomenology
 check. Same GPU trajectory as v1 (the 8-field cell-centered layout is, if
 anything, more CUDA-friendly than the staggered v1 grid).
+
+## 8. v3 direction (planned): potentials-first, coherent matter
+
+Decision (2026-07-18): v3 will be formulated **closer to the source
+claims** — at minimum with the electromagnetic **potentials (φ, A) as the
+dynamical variables**, per the analysis in neutrinos.md §3–§3.1. The
+natural and honest way to do this is one construction, not two:
+
+- **Matter**: a Gross–Pitaevskii condensate ψ (the continuum form of
+  "coherent matter", neutrinos.md §4) with minimal coupling — the GPE
+  couples to φ and **A** directly, `(−i∇ − qA)²ψ/2m + qφψ + g|ψ|²ψ`;
+  fields never enter the matter equation. Potentials-first is not an
+  add-on here; it is how a condensate couples to electromagnetism at all.
+- **EM sector**: Lorenz-gauge wave equations □A = J, □φ = ρ (same
+  hyperbolic machinery as our existing solvers), with E, B derived
+  quantities used only for comparison diagnostics.
+- **Native observables**: condensate phase (an Aharonov–Bohm-sensitive
+  readout), quantized circulation, persistent toroidal currents —
+  persistence is *generic* in this model family rather than the puzzle.
+- **Experiments this unlocks**: (a) the anapole null, quantified — how
+  completely a fractal toroid's external *fields* cancel while its
+  external *potentials* survive; (b) the coherent-receiver test — an
+  oscillating anapole next to a condensate probe: does the probe's phase
+  register what no classical field carries? (the simulatable core of
+  Greenyer's "potential waves" + "coherent matter" pairing); (c) whether
+  a coil-of-coils of quantized vortex lines is stable, metastable, or
+  reconnects away.
+
+v1 (kinetic, field-based) and v2 (MHD, field-based) remain as the
+classical control group against which the potentials/coherence
+formulation is compared.

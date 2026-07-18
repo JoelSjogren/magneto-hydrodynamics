@@ -3,54 +3,64 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>magneto-hydrodynamics — run dashboard</title>
+<title>magneto-hydrodynamics — live run</title>
 <style>
   body { font-family: sans-serif; margin: 0; background: #14161a; color: #d8dce2; }
-  header { padding: 10px 18px; background: #1c1f26; display: flex; gap: 14px;
-           align-items: center; flex-wrap: wrap; }
+  header { padding: 10px 18px; background: #1c1f26; display: flex; gap: 16px;
+           align-items: baseline; flex-wrap: wrap; }
   header a { color: #7ab7ff; text-decoration: none; }
-  select, button, label { font-size: 14px; }
-  select { background: #262a33; color: #d8dce2; border: 1px solid #3a3f4b;
-           padding: 4px 8px; border-radius: 4px; }
+  #runname { color: #7ad151; font-weight: bold; }
   main { display: flex; flex-wrap: wrap; gap: 18px; padding: 18px; }
   .panel { background: #1c1f26; border-radius: 8px; padding: 14px; }
-  #frameimg { max-width: 640px; width: 100%; image-rendering: auto;
-              background: #000; border-radius: 4px; }
-  #slider { width: 100%; }
-  #status { color: #9aa3b0; font-size: 13px; margin-top: 6px; }
+  img.frame { max-width: 560px; width: 100%; background: #000; border-radius: 4px; }
+  input[type=range].wide { width: 100%; }
+  .muted { color: #9aa3b0; font-size: 13px; }
   canvas { background: #101216; border-radius: 4px; }
   .cols label { margin-right: 10px; font-size: 13px; }
   h3 { margin: 2px 0 10px; font-size: 15px; color: #aeb6c2; }
+  .ctl { display: flex; gap: 10px; align-items: center; font-size: 13px;
+         margin: 4px 0; }
+  .ctl input[type=range] { flex: 1; }
 </style>
 </head>
 <body>
 <header>
-  <b>run dashboard</b>
-  <select id="runsel"></select>
-  <select id="streamsel"><option value="frames">2D slices</option></select>
-  <label><input type="checkbox" id="live" checked> follow live</label>
-  <label><input type="checkbox" id="logy" checked> log y</label>
-  <span id="poller" style="color:#9aa3b0;font-size:12px"></span>
+  <b>live run:</b> <span id="runname">…</span>
+  <span class="muted" id="progress"></span>
+  <span class="muted" id="poller"></span>
   <a href="preview.html">README</a>
   <a href="out/videos/">videos</a>
 </header>
 <main>
-  <div class="panel" style="flex:1;min-width:420px">
-    <h3>frames <span id="framelabel"></span></h3>
-    <img id="frameimg" alt="frame">
-    <input type="range" id="slider" min="0" max="0" value="0">
-    <div id="status">scanning…</div>
+  <div class="panel" style="flex:1;min-width:400px">
+    <h3>frames <span class="muted" id="framelabel"></span></h3>
+    <label class="muted"><input type="radio" name="stream" value="frames" checked> 2D slices</label>
+    <label class="muted"><input type="radio" name="stream" value="frames3d"> 3D render</label>
+    <br>
+    <img id="frameimg" class="frame" alt="frame">
+    <input type="range" id="slider" class="wide" min="0" max="0" value="0">
+    <label class="muted"><input type="checkbox" id="live" checked> follow live</label>
   </div>
-  <div class="panel" style="flex:1;min-width:480px">
-    <h3>time series</h3>
+  <div class="panel" style="flex:1;min-width:420px">
+    <h3>interactive 3D <span class="muted">(drag to rotate — opacity |B|, color |ω|)</span></h3>
+    <canvas id="gl" width="480" height="480"></canvas>
+    <div class="ctl"><span>opacity</span><input type="range" id="opscale" min="1" max="80" value="25"></div>
+    <div class="ctl"><span>gamma</span><input type="range" id="gamma" min="10" max="150" value="55"></div>
+    <div class="muted" id="volstatus">waiting for volume data…</div>
+  </div>
+  <div class="panel" style="flex:1 1 100%;min-width:480px">
+    <h3>time series <span class="muted">(anapole |T| is column Tnorm)</span></h3>
     <div class="cols" id="cols"></div>
-    <canvas id="chart" width="640" height="380"></canvas>
+    <label class="muted"><input type="checkbox" id="logy" checked> log y</label>
+    <canvas id="chart" width="1100" height="360"></canvas>
   </div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
-const COLORS = ['#4fa3ff','#ff6b57','#7ad151','#e8c547','#c77dff','#4dd0c4'];
-let runs = [], frames = [], csv = null, enabled = {};
+const COLORS = ['#4fa3ff','#ff6b57','#7ad151','#e8c547','#c77dff','#4dd0c4','#f28cb1','#9aa3b0'];
+const DEFAULT_ON = new Set(['E_kin', 'E_mag', 'Tnorm']);
+let RUN = null, frames = [], frames3d = [], csv = null, enabled = {};
+let volMeta = null, volFrame = -1;
 
 async function listing(path) {
   try {
@@ -60,58 +70,42 @@ async function listing(path) {
     return [...doc.querySelectorAll('a')].map(a => a.getAttribute('href'));
   } catch { return []; }
 }
+const runDir = () => 'out/v2/' + RUN + '/';
+const stream = () => document.querySelector('input[name=stream]:checked').value;
 
-async function scanRuns() {
-  const found = [];
-  for (const base of ['out/v2/', 'out/phase3/']) {
-    for (const h of await listing(base)) {
-      if (!h.endsWith('/')) continue;
-      const sub = await listing(base + h);
-      if (sub.some(x => x === 'frames/' || x.startsWith('frame_')))
-        found.push(base + h);
-      // phase3/N*/frames/<k>/ layout
-      if (h.startsWith('N') && sub.includes('frames/')) {
-        for (const kk of await listing(base + h + 'frames/'))
-          if (kk.endsWith('/')) found.push(base + h + 'frames/' + kk);
-      }
-    }
-  }
-  return found;
-}
-
-function runFramesPath() {
-  const run = $('runsel').value;
-  const stream = $('streamsel').value;
-  if (run.includes('/frames/')) return run;          // phase3 leaf dir
-  return run + stream + '/';
-}
-function runCsvPath() {
-  const run = $('runsel').value;
-  if (run.includes('/frames/')) {                     // phase3: sibling csv
-    const m = run.match(/^(.*)frames\/(k\d+)_(\w+)\/$/);
-    return m ? `${m[1]}timeseries_${m[2]}_${m[3]}.csv` : null;
-  }
-  return run + 'timeseries.csv';
-}
-
-async function refreshFrames(keepPos) {
-  const dir = runFramesPath();
-  const fs = (await listing(dir)).filter(h => h.endsWith('.png')).sort();
-  const atEnd = +$('slider').value >= frames.length - 1;
-  frames = fs;
-  $('slider').max = Math.max(0, fs.length - 1);
-  if (($('live').checked && atEnd) || !keepPos) $('slider').value = fs.length - 1;
-  showFrame();
-  $('status').textContent = `${fs.length} frames in ${dir}`;
-}
 function showFrame() {
-  const i = +$('slider').value;
-  if (frames[i]) {
-    $('frameimg').src = runFramesPath() + frames[i];
-    $('framelabel').textContent = `— ${frames[i]} (${i+1}/${frames.length})`;
+  const list = stream() === 'frames' ? frames : frames3d;
+  const i = Math.min(+$('slider').value, list.length - 1);
+  if (i >= 0 && list[i]) {
+    $('frameimg').src = runDir() + stream() + '/' + list[i];
+    $('framelabel').textContent = `${list[i]} (${i+1}/${list.length})`;
   }
+  loadVolume(i);
 }
 
+async function poll() {
+  $('poller').textContent = 'updated ' + new Date().toLocaleTimeString();
+  try {
+    const cur = (await (await fetch('out/v2/CURRENT', {cache:'no-store'})).text()).trim();
+    if (cur && cur !== RUN) {           // new run started: reset
+      RUN = cur; frames = []; frames3d = []; csv = null; volMeta = null;
+      volFrame = -1; $('cols').innerHTML = ''; $('cols').dataset.for = '';
+      $('runname').textContent = RUN;
+    }
+  } catch {}
+  if (!RUN) return;
+  const atEnd = +$('slider').value >= frames.length - 1;
+  frames = (await listing(runDir() + 'frames/')).filter(h => h.endsWith('.png')).sort();
+  frames3d = (await listing(runDir() + 'frames3d/')).filter(h => h.endsWith('.png')).sort();
+  $('slider').max = Math.max(0, frames.length - 1);
+  if ($('live').checked && atEnd) $('slider').value = frames.length - 1;
+  $('progress').textContent = `${frames.length} frames`;
+  showFrame();
+  await refreshCsv();
+  if (!volMeta) await loadMeta();
+}
+
+// ---------- time series ----------
 function parseCsv(text) {
   const lines = text.trim().split('\n');
   const head = lines[0].split(',');
@@ -122,23 +116,19 @@ function parseCsv(text) {
   }
   return {head, cols};
 }
-
 async function refreshCsv() {
-  const p = runCsvPath();
-  if (!p) { csv = null; drawChart(); return; }
   try {
-    const r = await fetch(p, {cache:'no-store'});
+    const r = await fetch(runDir() + 'timeseries.csv', {cache:'no-store'});
     if (!r.ok) { csv = null; drawChart(); return; }
     csv = parseCsv(await r.text());
     const box = $('cols');
-    if (box.dataset.for !== p) {
-      box.dataset.for = p;
+    if (box.dataset.for !== RUN) {
+      box.dataset.for = RUN;
       box.innerHTML = '';
       csv.head.slice(1).forEach((h, i) => {
-        const on = enabled[h] ?? (i < 4);
-        enabled[h] = on;
+        enabled[h] = DEFAULT_ON.has(h);
         const lab = document.createElement('label');
-        lab.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}> <span style="color:${COLORS[i % COLORS.length]}">${h}</span>`;
+        lab.innerHTML = `<input type="checkbox" ${enabled[h] ? 'checked' : ''}> <span style="color:${COLORS[i % COLORS.length]}">${h}</span>`;
         lab.querySelector('input').onchange = e => { enabled[h] = e.target.checked; drawChart(); };
         box.appendChild(lab);
       });
@@ -146,37 +136,36 @@ async function refreshCsv() {
   } catch { csv = null; }
   drawChart();
 }
-
 function drawChart() {
   const c = $('chart'), g = c.getContext('2d');
   g.fillStyle = '#101216'; g.fillRect(0, 0, c.width, c.height);
-  if (!csv) { g.fillStyle = '#666'; g.fillText('no timeseries.csv', 20, 30); return; }
+  if (!csv) { g.fillStyle = '#666'; g.fillText('no timeseries yet', 20, 30); return; }
   const logy = $('logy').checked;
   const t = csv.cols[csv.head[0]];
   const act = csv.head.slice(1).filter(h => enabled[h]);
   let vals = [];
   for (const h of act) vals = vals.concat(csv.cols[h].filter(v => isFinite(v) && (!logy || v > 0)));
-  if (!vals.length) return;
+  if (!vals.length || t.length < 2) return;
   const ty = v => logy ? Math.log10(v) : v;
   let ymin = Math.min(...vals.map(ty)), ymax = Math.max(...vals.map(ty));
   if (ymax === ymin) ymax += 1;
-  const ml = 56, mb = 28, mt = 10, mr = 10;
+  const ml = 60, mb = 26, mt = 10, mr = 10;
   const X = x => ml + (x - t[0]) / (t[t.length-1] - t[0] || 1) * (c.width - ml - mr);
   const Y = v => mt + (c.height - mt - mb) * (1 - (ty(v) - ymin) / (ymax - ymin));
   g.strokeStyle = '#2a2e38'; g.fillStyle = '#9aa3b0'; g.font = '11px sans-serif';
   const ticks = logy
-    ? Array.from({length: Math.floor(ymax) - Math.ceil(ymin) + 1}, (_, i) => Math.pow(10, Math.ceil(ymin) + i))
+    ? Array.from({length: Math.max(1, Math.floor(ymax) - Math.ceil(ymin) + 1)}, (_, i) => Math.pow(10, Math.ceil(ymin) + i))
     : Array.from({length: 5}, (_, i) => ymin + i / 4 * (ymax - ymin));
   for (const v of ticks) {
     const y = Y(logy ? v : v);
     g.beginPath(); g.moveTo(ml, y); g.lineTo(c.width - mr, y); g.stroke();
     g.fillText(logy ? v.toExponential(0) : v.toPrecision(2), 4, y + 4);
   }
-  for (let q = 0; q <= 5; q++) {
-    const x = ml + q / 5 * (c.width - ml - mr);
-    g.fillText((t[0] + q / 5 * (t[t.length-1] - t[0])).toFixed(1), x - 8, c.height - 8);
+  for (let q = 0; q <= 6; q++) {
+    const x = ml + q / 6 * (c.width - ml - mr);
+    g.fillText((t[0] + q / 6 * (t[t.length-1] - t[0])).toFixed(1), x - 8, c.height - 6);
   }
-  act.forEach((h, i) => {
+  act.forEach(h => {
     g.strokeStyle = COLORS[csv.head.slice(1).indexOf(h) % COLORS.length];
     g.lineWidth = 1.8; g.beginPath();
     let started = false;
@@ -189,33 +178,156 @@ function drawChart() {
   });
 }
 
-async function switchRun(keepPos) {
-  const run = $('runsel').value;
-  const has3d = !run.includes('/frames/') &&
-                (await listing(run)).includes('frames3d/');
-  const ss = $('streamsel');
-  const want = ss.value;
-  ss.innerHTML = '<option value="frames">2D slices</option>' +
-                 (has3d ? '<option value="frames3d">3D volume</option>' : '');
-  if ([...ss.options].some(o => o.value === want)) ss.value = want;
-  await refreshFrames(keepPos);
-  await refreshCsv();
-}
+// ---------- WebGL2 volume raycaster ----------
+const gl = $('gl').getContext('webgl2');
+let prog = null, texOp = null, texCol = null, volN = 0;
+let yaw = 0.7, pitch = 0.4, dragging = false, lx = 0, ly = 0;
 
-(async () => {
-  runs = await scanRuns();
-  $('runsel').innerHTML = runs.map(r => `<option value="${r}">${r.replace('out/','')}</option>`).join('');
-  if (runs.length) { $('runsel').value = runs[runs.length - 1]; await switchRun(false); }
-  $('runsel').onchange = () => switchRun(false);
-  $('streamsel').onchange = () => refreshFrames(false);
-  $('slider').oninput = showFrame;
-  $('logy').onchange = drawChart;
-  setInterval(async () => {
-    $('poller').textContent = 'updated ' + new Date().toLocaleTimeString();
-    await refreshFrames(true);
-    await refreshCsv();
-  }, 5000);
-})();
+const VS = `#version 300 es
+in vec2 p; out vec2 uv;
+void main(){ uv = p; gl_Position = vec4(p, 0., 1.); }`;
+const FS = `#version 300 es
+precision highp float; precision highp sampler3D;
+in vec2 uv; out vec4 frag;
+uniform sampler3D uOp, uCol;
+uniform mat3 uRot;
+uniform float uOpScale, uGamma;
+vec3 viridis(float t){
+  const vec3 c0=vec3(0.27772,0.00541,0.33410),c1=vec3(0.10509,1.40461,1.38459),
+  c2=vec3(-0.33086,0.21485,0.09510),c3=vec3(-4.63423,-5.79910,-19.33244),
+  c4=vec3(6.22827,14.17993,56.69055),c5=vec3(4.77638,-13.74515,-65.35303),
+  c6=vec3(-5.43546,4.64585,26.31244);
+  return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))));
+}
+void main(){
+  vec3 dir = normalize(uRot * vec3(0., 0., -1.));
+  vec3 org = uRot * vec3(uv * 0.9, 1.2) + vec3(0.5);
+  // slab intersection with [0,1]^3
+  vec3 inv = 1.0 / dir;
+  vec3 t0 = (vec3(0.) - org) * inv, t1 = (vec3(1.) - org) * inv;
+  vec3 tmin3 = min(t0, t1), tmax3 = max(t0, t1);
+  float tin = max(max(tmin3.x, tmin3.y), tmin3.z);
+  float tout = min(min(tmax3.x, tmax3.y), tmax3.z);
+  vec3 bgc = vec3(0.055);
+  if (tout <= max(tin, 0.)) { frag = vec4(bgc, 1.); return; }
+  const int N = 220;
+  float ds = (tout - tin) / float(N);
+  vec3 acc = vec3(0.); float T = 1.;
+  for (int i = 0; i < N; i++){
+    vec3 p = org + dir * (tin + (float(i) + .5) * ds);
+    float op = texture(uOp, p).r;
+    if (op <= 0.003) continue;
+    float a = 1. - exp(-uOpScale * pow(op, uGamma) * ds);
+    vec3 col = viridis(texture(uCol, p).r);
+    acc += T * a * col;
+    T *= 1. - a;
+    if (T < 0.01) break;
+  }
+  frag = vec4(acc + T * bgc, 1.);
+}`;
+
+function initGL() {
+  const mk = (t, s) => { const sh = gl.createShader(t); gl.shaderSource(sh, s);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS))
+      throw gl.getShaderInfoLog(sh);
+    return sh; };
+  prog = gl.createProgram();
+  gl.attachShader(prog, mk(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER,
+    new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+}
+function makeTex(unit) {
+  const t = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0 + unit);
+  gl.bindTexture(gl.TEXTURE_3D, t);
+  gl.texStorage3D(gl.TEXTURE_3D, 1, gl.R8, volN, volN, volN);
+  for (const p of ['TEXTURE_MIN_FILTER', 'TEXTURE_MAG_FILTER'])
+    gl.texParameteri(gl.TEXTURE_3D, gl[p], gl.LINEAR);
+  for (const p of ['TEXTURE_WRAP_S', 'TEXTURE_WRAP_T', 'TEXTURE_WRAP_R'])
+    gl.texParameteri(gl.TEXTURE_3D, gl[p], gl.CLAMP_TO_EDGE);
+  return t;
+}
+async function loadMeta() {
+  try {
+    const r = await fetch(runDir() + 'vol/meta.json', {cache:'no-store'});
+    if (!r.ok) return;
+    volMeta = await r.json();
+    volN = volMeta.n;
+    if (!prog) initGL();
+    texOp = makeTex(0); texCol = makeTex(1);
+    gl.uniform1i(gl.getUniformLocation(prog, 'uOp'), 0);
+    gl.uniform1i(gl.getUniformLocation(prog, 'uCol'), 1);
+    $('volstatus').textContent = `volume data: ${volN}³ per frame`;
+    loadVolume(+$('slider').value, true);
+  } catch {}
+}
+let volBusy = false;
+async function loadVolume(i, force) {
+  if (!volMeta || i < 0 || (i === volFrame && !force) || volBusy) return;
+  volBusy = true;
+  const tag = String(i).padStart(5, '0');
+  try {
+    const [bB, bW] = await Promise.all([
+      fetch(runDir() + `vol/B_${tag}.bin`, {cache:'no-store'}),
+      fetch(runDir() + `vol/W_${tag}.bin`, {cache:'no-store'})]);
+    if (bB.ok && bW.ok) {
+      const dB = new Uint8Array(await bB.arrayBuffer());
+      const dW = new Uint8Array(await bW.arrayBuffer());
+      if (dB.length === volN ** 3) {
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, texOp);
+        gl.texSubImage3D(gl.TEXTURE_3D, 0, 0, 0, 0, volN, volN, volN,
+                         gl.RED, gl.UNSIGNED_BYTE, dB);
+        gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, texCol);
+        gl.texSubImage3D(gl.TEXTURE_3D, 0, 0, 0, 0, volN, volN, volN,
+                         gl.RED, gl.UNSIGNED_BYTE, dW);
+        volFrame = i;
+        $('volstatus').textContent = `volume frame ${i} (${volN}³)`;
+        renderGL();
+      }
+    }
+  } catch {}
+  volBusy = false;
+}
+function renderGL() {
+  if (!prog || !volMeta) return;
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  // rot = Ry(yaw) * Rx(pitch), column-major
+  const rot = [cy, 0, -sy,  sy*sp, cp, cy*sp,  sy*cp, -sp, cy*cp];
+  gl.uniformMatrix3fv(gl.getUniformLocation(prog, 'uRot'), false, rot);
+  gl.uniform1f(gl.getUniformLocation(prog, 'uOpScale'), +$('opscale').value);
+  gl.uniform1f(gl.getUniformLocation(prog, 'uGamma'), +$('gamma').value / 100);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+$('gl').onmousedown = e => { dragging = true; lx = e.clientX; ly = e.clientY; };
+window.onmouseup = () => dragging = false;
+window.onmousemove = e => {
+  if (!dragging) return;
+  yaw += (e.clientX - lx) * 0.008;
+  pitch = Math.max(-1.5, Math.min(1.5, pitch + (e.clientY - ly) * 0.008));
+  lx = e.clientX; ly = e.clientY;
+  renderGL();
+};
+$('opscale').oninput = renderGL;
+$('gamma').oninput = renderGL;
+
+// ---------- wiring ----------
+$('slider').oninput = showFrame;
+$('logy').onchange = drawChart;
+document.querySelectorAll('input[name=stream]').forEach(r => r.onchange = showFrame);
+poll();
+setInterval(poll, 5000);
 </script>
 </body>
 </html>

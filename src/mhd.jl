@@ -205,6 +205,50 @@ mhd_magnetic_energy(sim::MHDSim) =
     0.5 * cellvol(sim.box) *
     (sum(abs2, sim.S[MBX]) + sum(abs2, sim.S[MBY]) + sum(abs2, sim.S[MBZ]))
 
+"""
+    checkpoint_save(sim, dir; extra=Dict())
+
+Full-precision state dump for resumption: all 8 fields (FP64) to
+`checkpoint.bin`, scalars + caller extras to `checkpoint.json`.
+"""
+function checkpoint_save(sim::MHDSim, dir::AbstractString;
+                         extra = Dict{String,Any}())
+    open(joinpath(dir, "checkpoint.bin"), "w") do io
+        for q in 1:8
+            write(io, sim.S[q])
+        end
+    end
+    kv = ["\"$k\": $v" for (k, v) in
+          merge(Dict("n" => sim.box.n, "t" => sim.t,
+                     "absorbed" => sim.absorbed, "eta" => sim.eta,
+                     "cs" => sim.cs), extra)]
+    write(joinpath(dir, "checkpoint.json"), "{" * join(kv, ", ") * "}\n")
+    dir
+end
+
+"""
+    checkpoint_load!(sim, dir) -> Dict of the saved scalars
+
+Restore fields and time into `sim` from a `checkpoint_save` directory.
+"""
+function checkpoint_load!(sim::MHDSim, dir::AbstractString)
+    meta = Dict{String,Float64}()
+    for m in eachmatch(r"\"([^\"]+)\":\s*([-0-9.eE+]+)",
+                       read(joinpath(dir, "checkpoint.json"), String))
+        meta[m.captures[1]] = parse(Float64, m.captures[2])
+    end
+    Int(meta["n"]) == sim.box.n ||
+        error("checkpoint is $(Int(meta["n"]))³, sim is $(sim.box.n)³")
+    open(joinpath(dir, "checkpoint.bin"), "r") do io
+        for q in 1:8
+            read!(io, sim.S[q])
+        end
+    end
+    sim.t = meta["t"]
+    sim.absorbed = meta["absorbed"]
+    meta
+end
+
 "Central-difference curl of fields (fx,fy,fz) — used for J = ∇×B and ω = ∇×v."
 function curl_central(Fx, Fy, Fz, box::Box, ip, im)
     n = box.n

@@ -14,13 +14,16 @@ Raycast the cube: `opacity` (≥0) sets extinction per unit length
 """
 function volume_render(color::Array{Float64,3}, opacity::Array{Float64,3},
                        box::Box; azim = 0.6, elev = 0.45, res = 384,
-                       nstep = 256, op_scale = 8.0, clo = 0.0, chi = 1.0,
-                       logcolor = false, bg = 0.07)
+                       nstep = 256, op_scale = 18.0, op_gamma = 0.5,
+                       clo = 0.0, chi = 1.0, logcolor = false, bg = 0.07)
     n = box.n
     L = n * box.dx
     opmax = maximum(opacity)
     opmax <= 0 && (opmax = 1.0)
-    κ = op_scale / (opmax * L)          # extinction coefficient scale
+    # opacity transfer: (op/opmax)^γ — γ < 1 lifts the diffuse mid-range so
+    # weak extended fields stay visible (raw values left the limnickels
+    # video almost fully transparent)
+    κ = op_scale / L
     ca, sa = cos(azim), sin(azim)
     ce, se = cos(elev), sin(elev)
     # view basis: dir = into screen, (ex, ey) = screen axes (world coords)
@@ -63,7 +66,7 @@ function volume_render(color::Array{Float64,3}, opacity::Array{Float64,3},
                     cv += w * color[i0+di, j0+dj, k0+dk]
                 end
                 op <= 0 && continue
-                a = 1 - exp(-κ * op * ds)
+                a = 1 - exp(-κ * (op / opmax)^op_gamma * ds)
                 a < 1e-4 && continue
                 vv = logcolor ? log10(max(cv, 1e-300)) : cv
                 vn = clamp((vv - clo) / span, 0.0, 1.0)

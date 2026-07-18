@@ -23,6 +23,7 @@ export Curve, fractal_coil, segments, frames, npoints,
        MRHO, MMX, MMY, MMZ, MBX, MBY, MBZ, MPSI,
        MHDSim, mhd_step!, mhd_rhs!, mhd_kinetic_energy, mhd_magnetic_energy,
        curl_central, grid_moments, azimuthal_spectrum,
+       checkpoint_save, checkpoint_load!,
        add_flux_ring!, add_vortex_ring!,
        volume_render
 
