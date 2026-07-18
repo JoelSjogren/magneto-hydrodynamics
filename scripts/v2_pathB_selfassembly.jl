@@ -4,9 +4,11 @@
 #
 #   julia -t auto --project=. scripts/v2_pathB_selfassembly.jl [scenario] [ngrid] [t_end] [resume] [gpu]
 #
-# The flag "gpu" (any position) runs the solver on the GPU via CUDA, FP64,
-# and errors out if no functional CUDA device is available. Without it the
-# run is always CPU. Diagnostics/rendering stay on the CPU either way.
+# The flag "gpu" (any position) runs the solver on the GPU via CUDA, FP64;
+# "gpu32" instead keeps the device state in FP32 (fast on consumer cards,
+# trajectory identical only statistically). Both error out if no functional
+# CUDA device is available. Without a flag the run is always CPU.
+# Diagnostics/rendering stay on the CPU (FP64) either way.
 #
 # scenarios: counterhel — co-current, counter-helicity magnetic ring pair
 #            opposed    — anti-parallel ring currents forced together
@@ -24,8 +26,9 @@ using Random
 
 Base.exit_on_sigint(false)   # deliver SIGINT as InterruptException
 
-const GPU = "gpu" in ARGS
-const POSARGS = filter(a -> a != "gpu", ARGS)
+const GPU32 = "gpu32" in ARGS
+const GPU = GPU32 || "gpu" in ARGS
+const POSARGS = filter(a -> !(a in ("gpu", "gpu32")), ARGS)
 const SCEN = length(POSARGS) >= 1 ? POSARGS[1] : "counterhel"
 const NGRID = length(POSARGS) >= 2 ? parse(Int, POSARGS[2]) : 64
 const T_END = length(POSARGS) >= 3 ? parse(Float64, POSARGS[3]) : 25.0
@@ -94,7 +97,7 @@ else
     end
 end
 
-const GSIM = GPU ? MHDCuda.to_gpu(sim) : nothing
+const GSIM = GPU ? MHDCuda.to_gpu(sim; T = GPU32 ? Float32 : Float64) : nothing
 
 _bmag() = sqrt.(sim.S[MBX] .^ 2 .+ sim.S[MBY] .^ 2 .+ sim.S[MBZ] .^ 2)
 function _omag()
@@ -195,7 +198,7 @@ write(joinpath(@__DIR__, "..", "out", "v2", "CURRENT"), "$(SCEN)_N$(NGRID)")
 
 println("v2 path B [$SCEN] $(NGRID)³, t: $(round(sim.t, digits=2)) → $T_END, ",
         "S=$(1/ETA), ",
-        GPU ? "CUDA ($(CUDA.name(CUDA.device())))" :
+        GPU ? "CUDA $(GPU32 ? "FP32" : "FP64") ($(CUDA.name(CUDA.device())))" :
               "$(Threads.nthreads()) threads")
 try
     while sim.t < T_END
