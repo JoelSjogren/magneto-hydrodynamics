@@ -117,8 +117,7 @@ rows = RESUME ? readlines(joinpath(OUT, "timeseries.csv")) :
        ["t,E_kin,E_mag,mz,Tnorm,Tz,mode_max,mode_amp"]
 
 "4-panel frame: rows = log|B|, |ω|; columns = xz slice, xy (z=0) slice."
-function render_frame(nf)
-    B = _bmag(); W = _omag()
+function render_frame(nf, B, W)
     j0 = box.n ÷ 2
     npx = box.n * UP
     side = 2npx + GAP
@@ -145,16 +144,12 @@ function render_frame(nf)
 end
 
 "3D volume render: opacity = |B| (structure), color = |ω| (flow state)."
-function render_frame3d(nf)
-    img = volume_render(_omag(), _bmag(), box; res = 448, chi = OM_HI,
-                        azim = 0.6, elev = 0.45)
+render_frame3d(nf, img) =
     save_png(joinpath(OUT, "frames3d", "frame_$(lpad(nf, 5, '0')).png"), img)
-end
 
 "uint8 volume dumps for the interactive raycaster (gitignored)."
-function dump_volumes(nf)
+function dump_volumes(nf, B, W)
     tag = lpad(nf, 5, '0')
-    B = _bmag(); W = _omag()
     qB = Vector{UInt8}(undef, length(B))
     qW = Vector{UInt8}(undef, length(W))
     @inbounds for i in eachindex(B)
@@ -166,16 +161,34 @@ function dump_volumes(nf)
     write(joinpath(OUT, "vol", "W_$tag.bin"), qW)
 end
 
-function emit_frame()
+# On GPU runs the file work (panel render, PNG encode, volume dumps) runs
+# on a spawned CPU task and overlaps the next stepping stretch; one frame
+# in flight at a time. img3d === nothing → CPU path, fully synchronous.
+const WRITER = Ref{Any}(nothing)
+flush_writer() = (WRITER[] !== nothing && wait(WRITER[]); WRITER[] = nothing)
+
+function emit_frame(B, W, img3d)
     global nframe
-    render_frame(nframe)
-    render_frame3d(nframe)
-    dump_volumes(nframe)
+    nf = nframe
+    if img3d === nothing
+        render_frame(nf, B, W)
+        render_frame3d(nf, volume_render(W, B, box; res = 448, chi = OM_HI,
+                                         azim = 0.6, elev = 0.45))
+        dump_volumes(nf, B, W)
+    else
+        flush_writer()
+        WRITER[] = Threads.@spawn begin
+            render_frame(nf, B, W)
+            render_frame3d(nf, img3d)
+            dump_volumes(nf, B, W)
+        end
+    end
     nframe += 1
 end
 
 "Write timeseries + checkpoint (normal completion and SIGINT both land here)."
 function finish(status)
+    flush_writer()
     GPU && MHDCuda.download!(sim, GSIM)
     write(joinpath(OUT, "timeseries.csv"), join(rows, "\n") * "\n")
     checkpoint_save(sim, OUT;
@@ -192,7 +205,7 @@ if !RESUME
           """{"n": $(box.n), "fields": ["B", "W"],
               "B": {"scale": "log10", "lo": $(LOGB_HI - 3.5), "hi": $LOGB_HI},
               "W": {"scale": "linear", "lo": 0.0, "hi": $OM_HI}}""")
-    emit_frame()
+    emit_frame(_bmag(), _omag(), nothing)
 end
 write(joinpath(@__DIR__, "..", "out", "v2", "CURRENT"), "$(SCEN)_N$(NGRID)")
 
@@ -205,19 +218,27 @@ try
         global tnext
         GPU ? MHDCuda.gpu_step!(sim, GSIM) : mhd_step!(sim)
         if sim.t >= tnext
-            GPU && MHDCuda.download!(sim, GSIM)
-            Jx, Jy, Jz = curl_central(sim.S[MBX], sim.S[MBY], sim.S[MBZ],
-                                      box, sim.ip, sim.im)
-            J2 = Jx .^ 2 .+ Jy .^ 2 .+ Jz .^ 2
-            spec = azimuthal_spectrum(J2, box, R)
+            if GPU
+                Bf, Wf, J2f, img3d =
+                    MHDCuda.frame_render_products!(GSIM, sim; chi = OM_HI)
+                m, T, ekin, emag = MHDCuda.gpu_frame_scalars!(GSIM, sim)
+            else
+                Bf = _bmag(); Wf = _omag()
+                Jx, Jy, Jz = curl_central(sim.S[MBX], sim.S[MBY], sim.S[MBZ],
+                                          box, sim.ip, sim.im)
+                J2f = Jx .^ 2 .+ Jy .^ 2 .+ Jz .^ 2
+                m, T = grid_moments(sim)
+                ekin = mhd_kinetic_energy(sim)
+                emag = mhd_magnetic_energy(sim)
+                img3d = nothing
+            end
+            spec = azimuthal_spectrum(J2f, box, R)
             rel = spec[2:end] ./ max(spec[1], 1e-30)
             mmax = argmax(rel)
-            m, T = grid_moments(sim)
-            push!(rows, join((round(sim.t, digits = 3),
-                              mhd_kinetic_energy(sim), mhd_magnetic_energy(sim),
+            push!(rows, join((round(sim.t, digits = 3), ekin, emag,
                               m[3], sqrt(sum(abs2, T)), T[3],
                               mmax, rel[mmax]), ","))
-            emit_frame()
+            emit_frame(Bf, Wf, img3d)
             tnext += FRAME_DT
         end
     end
