@@ -139,6 +139,7 @@ scenarios (full numbers and discussion in README §7.6). Headline:
   are running to test whether the *saturated* |T| converges and is
   seed-independent.
 
-![v2 scenarios at t = 12, 192³ — 3D volume render (opacity = |B|, colour =
-|ω|): counterhel's two rings stay distinct (FRC-forming merge), limnickels
-collapses to a compact core, opposed stays diffuse.](out/figures/ic_comparison_N192.png)
+![v2 scenarios, 192³ — initial conditions (top, t = 0) vs evolved (bottom,
+t = 12); 3D volume render (opacity = |B|, colour = |ω|). Similar two-ring
+starts diverge: counterhel keeps two distinct rings (FRC-forming merge),
+limnickels collapses to a compact core, opposed stays diffuse.](out/figures/ic_comparison_N192.png)
