@@ -5,6 +5,7 @@ out/**
 !out/videos/*.mp4
 !out/videos/*.gif
 !out/plots/*.svg
+!out/figures/*.png
 !out/**/*.csv
 
 Manifest.toml

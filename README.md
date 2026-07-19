@@ -659,6 +659,11 @@ Bottom line: "a spontaneous anapole forms and outlives the driving flow" is
 robust across resolution and initial condition; any specific value for its
 strength or the sub-ring count is not yet converged.
 
+![v2 scenarios at t = 12, 192³ (3D volume render: opacity = |B|, colour =
+|ω|). counterhel keeps two distinct rings merging toward an FRC; limnickels
+has collapsed to a compact core; opposed stays diffuse — the same two-ring
+geometry gives visibly different outcomes.](out/figures/ic_comparison_N192.png)
+
 ### 7.7 Numerical plan and reuse
 
 New module `src/mhd.jl` (state: ρ, ρv, B, ψ — 8 cell-centered fields;
