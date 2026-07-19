@@ -112,7 +112,29 @@ our 64³ run already reproduces the mid-plane current layer and merge (see
 
 | Catalogue phenomenon | v2 diagnostic | Seen so far |
 |---|---|---|
-| Necklace of secondary rings | azimuthal mode spectrum at the collision annulus | grid m=4 only before noise seeding; 96³ noise-seeded run in progress |
+| Necklace of secondary rings | azimuthal mode spectrum at the collision annulus | noise-seeded collision does break up azimuthally, but the dominant mode is grid-dependent — m=4 (192³), m=4/8 flicker (256³), m=8/12 (opposed), all harmonics of the grid's 4-fold symmetry; not yet a physical count (§6) |
 | Iterated cascade (rings³) | mode spectrum vs time + frame videos | — |
-| Writhe→twist helicity flow | anapole (toroidal) moment |T|(t) — zero for a plain ring, nonzero for coil-of-coils winding | machine zero in the 64³ pre-noise runs; **spontaneous growth to ~4×10⁻⁴ (saturating) in the noise-seeded 96³ collision run** |
+| Writhe→twist helicity flow | anapole (toroidal) moment |T|(t) — zero for a plain ring, nonzero for coil-of-coils winding | machine zero pre-noise; **noise-seeded collision grows a persisting anapole — 192³ saturates at ~9.4×10⁻⁴ and outlives the flow (E_kin/E_mag decay 3.5–4.4×); strength ∝ vortex drive; magnitude not yet resolution-converged (§6)** |
 | Counter-helicity merge → FRC | mid-plane current sheet, m_z survival | reproduced at 64³ |
+
+## 6. Results — spontaneous-anapole campaign (2026-07-19)
+
+GPU runs at 96³–256³ on the `limnickels`, `counterhel`, and `opposed`
+scenarios (full numbers and discussion in README §7.6). Headline:
+
+- **The anapole persists and saturates.** `limnickels` |T| holds flat at
+  ~9.4×10⁻⁴ (192³) from t≈24 to t=36 while kinetic and magnetic energy decay
+  3.5–4.4×. |T| is a functional of the current J=∇×B, so this is a persisting
+  *current* — the largest-scale toroidal one, the slow survivor of
+  scale-selective resistive decay (∝ηk²). It is the fluid *flow* that dies,
+  not the current.
+- **Strength ∝ kinetic drive.** Peak |T| orders with vortex-ring circulation:
+  limnickels (P0=0.40) 9.4×10⁻⁴ > opposed (0.30) 5.9×10⁻⁴ > counterhel (0.10)
+  1.6×10⁻⁴. Generic to the two-ring geometry, but a vortex-collision effect,
+  not a magnetic one (counterhel has the strongest fields, the weakest
+  anapole).
+- **Not yet converged.** 256³ |T| runs 2.4–5× below 192³ (gap narrowing with
+  time); the breakup mode is grid-harmonic (m=4/8/12), not physical. A
+  resolution ladder (96–256³ to saturation) and a 192³ noise-seed ensemble
+  are running to test whether the *saturated* |T| converges and is
+  seed-independent.

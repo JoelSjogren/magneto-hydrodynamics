@@ -621,6 +621,44 @@ the sub-percent level.**
   field, higher resolution, and longer runs to test whether the saturated
   |T| is a plateau or a slow-growth phase.
 
+**192³/256³ campaign (2026-07-19, GPU).** The higher-resolution, longer-time
+follow-up called for just above.
+
+- **Persistence — the plateau is real.** At 192³, limnickels |T| saturates
+  at ~9.4×10⁻⁴ and holds flat from t ≈ 24 to t = 36 while kinetic energy
+  falls 3.5× and magnetic energy 4.4×: a plateau, not a slow-growth phase, on
+  this timescale. Since |T| = (1/10)∫[(r·J)r − 2r²J]dV is a functional of the
+  current J = ∇×B, a constant |T| means a *current* persists — it is the
+  fluid flow (E_kin) that dies, not the current. The field energy ∫B² also
+  decays 4.4×, yet under a uniform decay B→fB one would have E_mag/|T|²
+  constant; measured it drops ~5× (t = 20→36), so the decay is
+  scale-selective. That is what resistive dissipation (∝ η k²) does — small
+  scales first, leaving the largest-scale (lowest-k) toroidal current, which
+  is exactly what the anapole measures. The anapole is the long-lived,
+  large-scale survivor; it must eventually decay resistively (the longest
+  timescale in the box), which t = 36 does not reach.
+- **Mechanism — strength tracks the kinetic drive.** Peak |T| at 192³ orders
+  with the vortex-ring circulation P0: limnickels (0.40) 9.4×10⁻⁴ > opposed
+  (0.30) 5.9×10⁻⁴ (still rising at t = 18) > counterhel (0.10, magnetically
+  dominated) 1.6×10⁻⁴. All three self-assemble a persisting anapole, so it is
+  generic to the two-ring geometry — but its magnitude is set by the kinetic
+  collision, not the field configuration (counterhel has the strongest fields
+  and the weakest anapole).
+- **Convergence — not there yet.** The anapole magnitude is not
+  resolution-converged: 256³ |T| runs 2.4–5× below 192³ through the growth
+  phase (the gap narrows with time). Bulk energetics agree to ~14%, so the
+  disagreement is specific to the anapole. The rotated-IC / higher-resolution
+  cross-check flagged for the 96³ mode number comes back negative: the
+  azimuthal mode is grid-influenced — m = 4 at 192³, flickering m = 4/m = 8
+  at 256³, m = 8/12 in opposed, all harmonics of the cubic grid's 4-fold
+  symmetry — so the sub-ring *count* is not yet physical. A resolution ladder
+  (96–256³ to saturation) and a 192³ noise-seed ensemble are running to test
+  whether the *saturated* |T| converges and is seed-independent.
+
+Bottom line: "a spontaneous anapole forms and outlives the driving flow" is
+robust across resolution and initial condition; any specific value for its
+strength or the sub-ring count is not yet converged.
+
 ### 7.7 Numerical plan and reuse
 
 New module `src/mhd.jl` (state: ρ, ρv, B, ψ — 8 cell-centered fields;
