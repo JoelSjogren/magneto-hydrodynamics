@@ -63,6 +63,32 @@ const OUT = joinpath(@__DIR__, "..", "out", "v2",
 box = Box(NGRID, HALF)
 sim = MHDSim(box; cs = CS, eta = ETA, sponge_width = SPONGE)
 
+"Scalar field = Σ of `nmodes` random cosine modes with integer wavevectors
+up to `kmax` — a band-limited random field (energy at large scales, not grid
+noise). The curl of three of these is a divergence-free random field."
+function _rand_lowk(box::Box, rng, nmodes::Int, kmax::Int)
+    n = box.n
+    k0 = 2π / (n * box.dx)
+    S = zeros(n, n, n)
+    for _ in 1:nmodes
+        kx = k0 * rand(rng, -kmax:kmax)
+        ky = k0 * rand(rng, -kmax:kmax)
+        kz = k0 * rand(rng, -kmax:kmax)
+        φ = 2π * rand(rng)
+        a = 2rand(rng) - 1
+        @inbounds for k in 1:n
+            z = center(box, k)
+            for j in 1:n
+                y = center(box, j)
+                for i in 1:n
+                    S[i, j, k] += a * cos(kx * center(box, i) + ky * y + kz * z + φ)
+                end
+            end
+        end
+    end
+    S
+end
+
 ckmeta = Dict{String,Float64}()
 if RESUME
     ckmeta = checkpoint_load!(sim, OUT)
@@ -88,6 +114,33 @@ else
         add_vortex_ring!(sim; R, a = A, z0 = +0.9, P0 = -0.40)
         add_flux_ring!(sim; R, a = A, z0 = -0.9, A0 = 0.10, Bt0 = 0.0)
         add_flux_ring!(sim; R, a = A, z0 = +0.9, A0 = 0.10, Bt0 = 0.0)
+    elseif SCEN == "random"
+        # Haphazard but energetic ICs: a divergence-free random velocity
+        # field and a weak divergence-free random seed field, each the curl
+        # of a band-limited (k ≤ 3) random vector potential — energy at large
+        # scales with something to evolve, not instant grid-scale
+        # dissipation. Same strong-flow/weak-field regime as limnickels, for
+        # comparison; the test is whether coherent rings / anapole structure
+        # crystallize out of disorder. Reproducible via seed=N.
+        let rng = Xoshiro(SEED), km = 3, nm = 12
+            vx, vy, vz = curl_central(_rand_lowk(box, rng, nm, km),
+                                      _rand_lowk(box, rng, nm, km),
+                                      _rand_lowk(box, rng, nm, km),
+                                      box, sim.ip, sim.im)
+            ρ0 = sim.S[MRHO]
+            sim.S[MMX] .= ρ0 .* vx
+            sim.S[MMY] .= ρ0 .* vy
+            sim.S[MMZ] .= ρ0 .* vz
+            f = sqrt(2.5 / max(mhd_kinetic_energy(sim), 1e-30))   # energetic
+            sim.S[MMX] .*= f; sim.S[MMY] .*= f; sim.S[MMZ] .*= f
+            bx, by, bz = curl_central(_rand_lowk(box, rng, nm, km),
+                                      _rand_lowk(box, rng, nm, km),
+                                      _rand_lowk(box, rng, nm, km),
+                                      box, sim.ip, sim.im)
+            sim.S[MBX] .= bx; sim.S[MBY] .= by; sim.S[MBZ] .= bz
+            g = sqrt(0.05 / max(mhd_magnetic_energy(sim), 1e-30))  # weak seed
+            sim.S[MBX] .*= g; sim.S[MBY] .*= g; sim.S[MBZ] .*= g
+        end
     else
         error("unknown scenario $SCEN")
     end
@@ -122,7 +175,7 @@ const OM_HI = RESUME ? ckmeta["om_hi"] : max(maximum(_omag()), 1e-12) * 1.5
 nframe = RESUME ? Int(ckmeta["nframe"]) : 0
 tnext = RESUME ? ckmeta["tnext"] : FRAME_DT
 rows = RESUME ? readlines(joinpath(OUT, "timeseries.csv")) :
-       ["t,E_kin,E_mag,mz,Tnorm,Tz,mode_max,mode_amp"]
+       ["t,E_kin,E_mag,mz,Tnorm,Tz,mode_max,mode_amp,Jsq,Jmax"]
 
 "4-panel frame: rows = log|B|, |ω|; columns = xz slice, xy (z=0) slice."
 function render_frame(nf, B, W)
@@ -243,9 +296,14 @@ try
             spec = azimuthal_spectrum(J2f, box, R)
             rel = spec[2:end] ./ max(spec[1], 1e-30)
             mmax = argmax(rel)
+            # current J = ∇×B: total ∫|J|²dV (activity/dissipation) and peak
+            # |J| (current-sheet strength) — separates a uniformly decaying
+            # current from one that reorganizes toward the anapole
+            jsq = sum(J2f) * cellvol(box)
+            jmax = sqrt(maximum(J2f))
             push!(rows, join((round(sim.t, digits = 3), ekin, emag,
                               m[3], sqrt(sum(abs2, T)), T[3],
-                              mmax, rel[mmax]), ","))
+                              mmax, rel[mmax], jsq, jmax), ","))
             emit_frame(Bf, Wf, img3d)
             tnext += FRAME_DT
         end
