@@ -140,7 +140,9 @@ scenarios (full numbers and discussion in README §7.6). Headline:
   grid/box/ring resonance in the r²-weighted (outer-dominated) anapole, where
   the boundary stamps a 4-fold pattern on the field. The anapole forms and
   decays; it does not persist. A larger-domain (half=4) run will confirm the
-  boundary's role.
+  boundary's role. A 192³ seed ensemble shows the magnitude is seed-dominated:
+  seeds 2/3 peak at 2–3×10⁻⁴ (seed 3 decays) vs the canonical 9.4×10⁻⁴, so
+  seed 1234 was a seed outlier too.
 
 ![v2 scenarios, 192³ — initial conditions (top, t = 0) vs evolved (bottom,
 t = 12); 3D volume render (opacity = |B|, colour = |ω|). Similar two-ring

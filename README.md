@@ -657,8 +657,12 @@ follow-up called for just above.
   ~14% across grids. The azimuthal mode is likewise grid-influenced (m = 4 at
   192³, m = 4/8 at 256³, m = 8/12 in opposed — grid harmonics), so the
   sub-ring *count* is not physical either. A larger-domain run (half = 4) is
-  planned to confirm the boundary's role; a 192³ seed ensemble tests whether
-  the plateau is seed-robust.
+  planned to confirm the boundary's role. A 192³ seed ensemble makes the case
+  worse for the canonical run: at the same grid, seeds 2 and 3 peak at
+  3.3×10⁻⁴ and 2.2×10⁻⁴ (seed 3 then decays) versus the canonical seed's
+  9.4×10⁻⁴ — so the magnitude is dominated by the noise realization (~4–6×
+  scatter at fixed grid), and seed 1234 was a high outlier in both its
+  magnitude and its lone plateau.
 
 Bottom line: a spontaneous anapole reliably *forms* (peaking near ~4×10⁻⁴,
 strength ∝ vortex drive) but **does not persist** — three of four resolutions
