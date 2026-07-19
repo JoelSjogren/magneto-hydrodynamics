@@ -644,20 +644,24 @@ follow-up called for just above.
   generic to the two-ring geometry — but its magnitude is set by the kinetic
   collision, not the field configuration (counterhel has the strongest fields
   and the weakest anapole).
-- **Convergence — not there yet.** The anapole magnitude is not
-  resolution-converged: 256³ |T| runs 2.4–5× below 192³ through the growth
-  phase (the gap narrows with time). Bulk energetics agree to ~14%, so the
-  disagreement is specific to the anapole. The rotated-IC / higher-resolution
-  cross-check flagged for the 96³ mode number comes back negative: the
-  azimuthal mode is grid-influenced — m = 4 at 192³, flickering m = 4/m = 8
-  at 256³, m = 8/12 in opposed, all harmonics of the cubic grid's 4-fold
-  symmetry — so the sub-ring *count* is not yet physical. A resolution ladder
-  (96–256³ to saturation) and a 192³ noise-seed ensemble are running to test
-  whether the *saturated* |T| converges and is seed-independent.
+- **Convergence — a warning from 256³.** The completed 256³ run undercuts
+  the persistence picture. Its |T| peaks at ~4.0×10⁻⁴ near t ≈ 21 (about half
+  the 192³ peak) and then *decays* to 1.8×10⁻⁴ by t = 36 — it does not
+  plateau. So going 192³→256³ both lowers the peak and turns the saturation
+  into a slow decay, and the 192³ plateau may be a low-resolution effect.
+  Bulk energetics still agree to ~14%, so this is specific to the anapole.
+  The azimuthal mode is likewise grid-influenced — m = 4 at 192³, flickering
+  m = 4/m = 8 at 256³, m = 8/12 in opposed, all harmonics of the cubic grid's
+  4-fold symmetry — so the sub-ring *count* is not physical either. A 96³/128³
+  resolution ladder (running) will show whether |T| and its persistence weaken
+  monotonically with resolution; a 192³ noise-seed ensemble tests
+  seed-robustness.
 
-Bottom line: "a spontaneous anapole forms and outlives the driving flow" is
-robust across resolution and initial condition; any specific value for its
-strength or the sub-ring count is not yet converged.
+Bottom line: a spontaneous anapole reliably *forms* across resolution and
+initial condition, but whether it *persists* is resolution-sensitive — it
+plateaus at 192³ yet peaks and decays at 256³, so the persistence seen at
+192³ is not yet trustworthy and may be a low-resolution artifact. Neither the
+strength nor the sub-ring count is converged.
 
 ![v2 scenarios, 192³ — initial conditions (top row, t = 0) vs evolved state
 (bottom row, t = 12); 3D volume render, opacity = |B|, colour = |ω|. The

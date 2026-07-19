@@ -114,7 +114,7 @@ our 64³ run already reproduces the mid-plane current layer and merge (see
 |---|---|---|
 | Necklace of secondary rings | azimuthal mode spectrum at the collision annulus | noise-seeded collision does break up azimuthally, but the dominant mode is grid-dependent — m=4 (192³), m=4/8 flicker (256³), m=8/12 (opposed), all harmonics of the grid's 4-fold symmetry; not yet a physical count (§6) |
 | Iterated cascade (rings³) | mode spectrum vs time + frame videos | — |
-| Writhe→twist helicity flow | anapole (toroidal) moment |T|(t) — zero for a plain ring, nonzero for coil-of-coils winding | machine zero pre-noise; **noise-seeded collision grows a persisting anapole — 192³ saturates at ~9.4×10⁻⁴ and outlives the flow (E_kin/E_mag decay 3.5–4.4×); strength ∝ vortex drive; magnitude not yet resolution-converged (§6)** |
+| Writhe→twist helicity flow | anapole (toroidal) moment |T|(t) — zero for a plain ring, nonzero for coil-of-coils winding | machine zero pre-noise; **noise-seeded collision grows an anapole; strength ∝ vortex drive. 192³ plateaus at ~9.4×10⁻⁴, but 256³ peaks (~4×10⁻⁴) then decays — persistence is resolution-sensitive, not converged (§6)** |
 | Counter-helicity merge → FRC | mid-plane current sheet, m_z survival | reproduced at 64³ |
 
 ## 6. Results — spontaneous-anapole campaign (2026-07-19)
@@ -133,11 +133,13 @@ scenarios (full numbers and discussion in README §7.6). Headline:
   1.6×10⁻⁴. Generic to the two-ring geometry, but a vortex-collision effect,
   not a magnetic one (counterhel has the strongest fields, the weakest
   anapole).
-- **Not yet converged.** 256³ |T| runs 2.4–5× below 192³ (gap narrowing with
-  time); the breakup mode is grid-harmonic (m=4/8/12), not physical. A
-  resolution ladder (96–256³ to saturation) and a 192³ noise-seed ensemble
-  are running to test whether the *saturated* |T| converges and is
-  seed-independent.
+- **Not converged — persistence is resolution-sensitive.** The completed
+  256³ run peaks at ~4×10⁻⁴ (t≈21, about half the 192³ peak) then *decays* to
+  1.8×10⁻⁴ by t=36 — it does not plateau like 192³, so the 192³ "saturation"
+  may be a low-resolution artifact. The breakup mode is grid-harmonic
+  (m=4/8/12), not physical. A 96³/128³ ladder (running) will show whether
+  this weakens monotonically with resolution; a seed ensemble tests
+  seed-robustness.
 
 ![v2 scenarios, 192³ — initial conditions (top, t = 0) vs evolved (bottom,
 t = 12); 3D volume render (opacity = |B|, colour = |ω|). Similar two-ring
