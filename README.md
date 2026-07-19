@@ -644,24 +644,28 @@ follow-up called for just above.
   generic to the two-ring geometry — but its magnitude is set by the kinetic
   collision, not the field configuration (counterhel has the strongest fields
   and the weakest anapole).
-- **Convergence — a warning from 256³.** The completed 256³ run undercuts
-  the persistence picture. Its |T| peaks at ~4.0×10⁻⁴ near t ≈ 21 (about half
-  the 192³ peak) and then *decays* to 1.8×10⁻⁴ by t = 36 — it does not
-  plateau. So going 192³→256³ both lowers the peak and turns the saturation
-  into a slow decay, and the 192³ plateau may be a low-resolution effect.
-  Bulk energetics still agree to ~14%, so this is specific to the anapole.
-  The azimuthal mode is likewise grid-influenced — m = 4 at 192³, flickering
-  m = 4/m = 8 at 256³, m = 8/12 in opposed, all harmonics of the cubic grid's
-  4-fold symmetry — so the sub-ring *count* is not physical either. A 96³/128³
-  resolution ladder (running) will show whether |T| and its persistence weaken
-  monotonically with resolution; a 192³ noise-seed ensemble tests
-  seed-robustness.
+- **Convergence — the plateau is a 192³ artifact.** The completed resolution
+  ladder is *non-monotonic* (peak |T| / value at t = 36): 4.1×10⁻⁴ / 2.9×10⁻⁴
+  (96³), 4.7×10⁻⁴ / 2.8×10⁻⁴ (128³), **9.4×10⁻⁴ / 9.4×10⁻⁴ (192³)**,
+  4.0×10⁻⁴ / 1.8×10⁻⁴ (256³). Three of the four grids agree — the anapole
+  peaks at ~4×10⁻⁴ around t ≈ 12–21 and then *decays*; only 192³ has the
+  highest peak and is the only one that plateaus. So the persistence is a
+  192³-specific artifact, most likely a resonance between the grid, the ring
+  geometry, and the box's 4-fold boundary imprint: the anapole is r²-weighted,
+  hence dominated by the outer region, and by t = 30 the field fills the box
+  with a rounded-square (m = 4) boundary signature. Bulk energetics agree to
+  ~14% across grids. The azimuthal mode is likewise grid-influenced (m = 4 at
+  192³, m = 4/8 at 256³, m = 8/12 in opposed — grid harmonics), so the
+  sub-ring *count* is not physical either. A larger-domain run (half = 4) is
+  planned to confirm the boundary's role; a 192³ seed ensemble tests whether
+  the plateau is seed-robust.
 
-Bottom line: a spontaneous anapole reliably *forms* across resolution and
-initial condition, but whether it *persists* is resolution-sensitive — it
-plateaus at 192³ yet peaks and decays at 256³, so the persistence seen at
-192³ is not yet trustworthy and may be a low-resolution artifact. Neither the
-strength nor the sub-ring count is converged.
+Bottom line: a spontaneous anapole reliably *forms* (peaking near ~4×10⁻⁴,
+strength ∝ vortex drive) but **does not persist** — three of four resolutions
+show it peak and decay, and the 192³ plateau that first looked like
+persistence is an outlier/artifact. No converged magnitude or sub-ring count
+is established, and the domain likely biases the outer, anapole-dominant
+region.
 
 ![v2 scenarios, 192³ — initial conditions (top row, t = 0) vs evolved state
 (bottom row, t = 12); 3D volume render, opacity = |B|, colour = |ω|. The
