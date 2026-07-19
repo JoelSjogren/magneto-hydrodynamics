@@ -34,8 +34,14 @@ const GPU = GPU32 || "gpu" in ARGS
 const SEED = let i = findfirst(a -> startswith(a, "seed="), ARGS)
     i === nothing ? 1234 : parse(Int, ARGS[i][6:end])
 end
-const POSARGS =
-    filter(a -> !(a in ("gpu", "gpu32")) && !startswith(a, "seed="), ARGS)
+# half=X sets the domain half-width (box spans [-X,X]³; default 2.0). Larger X
+# at the same ngrid = bigger domain, coarser resolution; to hold resolution
+# fixed, scale ngrid with X. Non-default writes to a "_halfX" dir.
+const HALF = let i = findfirst(a -> startswith(a, "half="), ARGS)
+    i === nothing ? 2.0 : parse(Float64, ARGS[i][6:end])
+end
+const POSARGS = filter(a -> !(a in ("gpu", "gpu32")) &&
+                       !startswith(a, "seed=") && !startswith(a, "half="), ARGS)
 const SCEN = length(POSARGS) >= 1 ? POSARGS[1] : "counterhel"
 const NGRID = length(POSARGS) >= 2 ? parse(Int, POSARGS[2]) : 64
 const T_END = length(POSARGS) >= 3 ? parse(Float64, POSARGS[3]) : 25.0
@@ -47,7 +53,6 @@ if GPU
         error("gpu flag given but CUDA is not functional on this machine")
     include(joinpath(dirname(pathof(FractalToroid)), "mhd_cuda.jl"))
 end
-const HALF = 2.0
 const R = 0.8
 const A = 0.2
 const D = 0.7               # ring half-separation
@@ -58,7 +63,9 @@ const FRAME_DT = 0.25
 const UP = max(1, 512 ÷ NGRID)
 const GAP = 8
 const OUT = joinpath(@__DIR__, "..", "out", "v2",
-                     "$(SCEN)_N$(NGRID)" * (SEED == 1234 ? "" : "_seed$(SEED)"))
+                     "$(SCEN)_N$(NGRID)" *
+                     (HALF == 2.0 ? "" : "_half$(HALF)") *
+                     (SEED == 1234 ? "" : "_seed$(SEED)"))
 
 box = Box(NGRID, HALF)
 sim = MHDSim(box; cs = CS, eta = ETA, sponge_width = SPONGE)
