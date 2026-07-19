@@ -28,7 +28,14 @@ Base.exit_on_sigint(false)   # deliver SIGINT as InterruptException
 
 const GPU32 = "gpu32" in ARGS
 const GPU = GPU32 || "gpu" in ARGS
-const POSARGS = filter(a -> !(a in ("gpu", "gpu32")), ARGS)
+# seed=N sets the symmetry-breaking RNG seed (default 1234). Non-default
+# seeds write to a "<scenario>_N<n>_seedN" dir so an ensemble doesn't
+# collide with the canonical run.
+const SEED = let i = findfirst(a -> startswith(a, "seed="), ARGS)
+    i === nothing ? 1234 : parse(Int, ARGS[i][6:end])
+end
+const POSARGS =
+    filter(a -> !(a in ("gpu", "gpu32")) && !startswith(a, "seed="), ARGS)
 const SCEN = length(POSARGS) >= 1 ? POSARGS[1] : "counterhel"
 const NGRID = length(POSARGS) >= 2 ? parse(Int, POSARGS[2]) : 64
 const T_END = length(POSARGS) >= 3 ? parse(Float64, POSARGS[3]) : 25.0
@@ -50,7 +57,8 @@ const SPONGE = 6
 const FRAME_DT = 0.25
 const UP = max(1, 512 ÷ NGRID)
 const GAP = 8
-const OUT = joinpath(@__DIR__, "..", "out", "v2", "$(SCEN)_N$(NGRID)")
+const OUT = joinpath(@__DIR__, "..", "out", "v2",
+                     "$(SCEN)_N$(NGRID)" * (SEED == 1234 ? "" : "_seed$(SEED)"))
 
 box = Box(NGRID, HALF)
 sim = MHDSim(box; cs = CS, eta = ETA, sponge_width = SPONGE)
@@ -86,7 +94,7 @@ else
     # symmetry-breaking noise (axisymmetric ICs on a clean grid leave
     # azimuthal instabilities nothing physical to grow from); applied only
     # at t = 0, so resumed runs continue the same trajectory
-    let rng = Xoshiro(1234)
+    let rng = Xoshiro(SEED)
         amp = 0.02 * maximum(abs, sim.S[MMZ])
         for q in (MMX, MMY, MMZ)
             Aq = sim.S[q]
