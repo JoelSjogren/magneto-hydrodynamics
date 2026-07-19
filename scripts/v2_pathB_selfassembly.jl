@@ -14,6 +14,11 @@
 #            opposed    — anti-parallel ring currents forced together
 #            limnickels — counter-rotating vortex-ring collision with a
 #                          weak frozen-in seed field
+#            random     — band-limited random flow + weak random seed field
+#            bubble     — ULTR: imploding low-density cavity with a seeded
+#                          re-entrant jet (cavitation collapse → vortex ring)
+#            bubble2    — ULTR: two cavities imploding side by side, jets
+#                          from mutual shielding only (no seeded jet)
 #
 # Checkpointing: the full state is saved on normal completion AND on
 # Ctrl+C / SIGINT, to <outdir>/checkpoint.{bin,json}. Pass "resume" as the
@@ -96,6 +101,42 @@ function _rand_lowk(box::Box, rng, nmodes::Int, kmax::Int)
     S
 end
 
+"Carve a low-density spherical cavity into ρ: ×(ρc + (1−ρc)·step(r−Rb)).
+Under the isothermal EOS p = cs²ρ the ambient pressure implodes it — the
+MHD stand-in for a cavitation bubble at collapse onset."
+function carve_cavity!(sim; Rb = 0.8, z0 = 0.0, rho_cav = 0.05, w = 0.08)
+    ρ = sim.S[MRHO]
+    s2 = w * sqrt(2.0)
+    for k in 1:box.n, j in 1:box.n, i in 1:box.n
+        r = sqrt(center(box, i)^2 + center(box, j)^2 +
+                 (center(box, k) - z0)^2)
+        f = 0.5 * (1 + FractalToroid._erf((r - Rb) / s2))
+        ρ[i, j, k] *= rho_cav + (1 - rho_cav) * f
+    end
+end
+
+"Gaussian momentum blob ρv_z += ρ·vz·exp(−|r−(0,0,z0)|²/2a²): the seeded
+re-entrant jet. (A dense 'foil' slab can't provide the asymmetry here —
+with p = cs²ρ it is high-pressure and explodes — so the jet that a nearby
+boundary would produce is imposed directly.)"
+function add_jet!(sim; z0 = 0.9, vz = -0.8, a = 0.35)
+    ρ = sim.S[MRHO]
+    inv2a2 = 1 / (2a^2)
+    for k in 1:box.n, j in 1:box.n, i in 1:box.n
+        d2 = center(box, i)^2 + center(box, j)^2 + (center(box, k) - z0)^2
+        sim.S[MMZ][i, j, k] += ρ[i, j, k] * vz * exp(-d2 * inv2a2)
+    end
+end
+
+"Rescale the (freshly seeded, previously zero) B to total energy `emag`.
+A box-filling random seed would start |T| ≈ 4×10⁻² — 100× the self-assembly
+signal — so bubble scenarios seed axisymmetric rims-threading flux rings
+(|T|(0) = machine zero, like every other scenario) and scale them here."
+function scale_seed_field!(sim; emag = 0.02)
+    g = sqrt(emag / max(mhd_magnetic_energy(sim), 1e-30))
+    sim.S[MBX] .*= g; sim.S[MBY] .*= g; sim.S[MBZ] .*= g
+end
+
 ckmeta = Dict{String,Float64}()
 if RESUME
     ckmeta = checkpoint_load!(sim, OUT)
@@ -148,6 +189,22 @@ else
             g = sqrt(0.05 / max(mhd_magnetic_energy(sim), 1e-30))  # weak seed
             sim.S[MBX] .*= g; sim.S[MBY] .*= g; sim.S[MBZ] .*= g
         end
+    elseif SCEN == "bubble"
+        # ULTR ultrasound-cleaner sim, simplified-MHD form: cavitation
+        # collapse → re-entrant jet → toroidal vortex ring. Run in a larger
+        # domain (half=3): the collapse emits shocks and the ring expands.
+        carve_cavity!(sim; Rb = 0.8, rho_cav = 0.05, w = 0.08)
+        add_jet!(sim; z0 = 0.9, vz = -0.8, a = 0.35)
+        add_flux_ring!(sim; R = 0.8, a = 0.2, z0 = 0.0, A0 = 0.1, Bt0 = 0.0)
+        scale_seed_field!(sim)
+    elseif SCEN == "bubble2"
+        # two cavities imploding along z: collapse asymmetry from mutual
+        # shielding alone — no hand-seeded jet
+        carve_cavity!(sim; Rb = 0.7, z0 = -0.9, rho_cav = 0.05, w = 0.08)
+        carve_cavity!(sim; Rb = 0.7, z0 = +0.9, rho_cav = 0.05, w = 0.08)
+        add_flux_ring!(sim; R = 0.7, a = 0.2, z0 = -0.9, A0 = 0.1, Bt0 = 0.0)
+        add_flux_ring!(sim; R = 0.7, a = 0.2, z0 = +0.9, A0 = 0.1, Bt0 = 0.0)
+        scale_seed_field!(sim)
     else
         error("unknown scenario $SCEN")
     end
@@ -156,6 +213,7 @@ else
     # at t = 0, so resumed runs continue the same trajectory
     let rng = Xoshiro(SEED)
         amp = 0.02 * maximum(abs, sim.S[MMZ])
+        amp == 0 && (amp = 0.02 * CS)   # kick-free ICs (bubble2)
         for q in (MMX, MMY, MMZ)
             Aq = sim.S[q]
             for idx in eachindex(Aq)
@@ -166,6 +224,12 @@ else
 end
 
 const GSIM = GPU ? MHDCuda.to_gpu(sim; T = GPU32 ? Float32 : Float64) : nothing
+
+# bubble scenarios get a third frame row showing ρ (the cavity/collapse is
+# a density story; |B| and |ω| don't show it). Fixed linear scale: ambient
+# ρ = 1 mid-scale, collapse compressions saturate.
+const RHO_PANELS = startswith(SCEN, "bubble")
+const RHO_HI = 2.5
 
 _bmag() = sqrt.(sim.S[MBX] .^ 2 .+ sim.S[MBY] .^ 2 .+ sim.S[MBZ] .^ 2)
 function _omag()
@@ -184,20 +248,23 @@ tnext = RESUME ? ckmeta["tnext"] : FRAME_DT
 rows = RESUME ? readlines(joinpath(OUT, "timeseries.csv")) :
        ["t,E_kin,E_mag,mz,Tnorm,Tz,mode_max,mode_amp,Jsq,Jmax"]
 
-"4-panel frame: rows = log|B|, |ω|; columns = xz slice, xy (z=0) slice."
-function render_frame(nf, B, W)
+"Panel frame: rows = log|B|, |ω| (+ ρ if given); columns = xz, xy slices."
+function render_frame(nf, B, W, R)
     j0 = box.n ÷ 2
     npx = box.n * UP
-    side = 2npx + GAP
-    rgb = fill(0x12, 3, side, side)
-    panels = ((B, true, :xz, 0, 0), (B, true, :xy, 1, 0),
-              (W, false, :xz, 0, 1), (W, false, :xy, 1, 1))
-    for (F, islog, sl, px, py) in panels
+    nrow = R === nothing ? 2 : 3
+    rgb = fill(0x12, 3, 2npx + GAP, nrow * npx + (nrow - 1) * GAP)
+    panels = Any[(B, :logb, :xz, 0, 0), (B, :logb, :xy, 1, 0),
+                 (W, :om, :xz, 0, 1), (W, :om, :xy, 1, 1)]
+    R === nothing ||
+        append!(panels, ((R, :rho, :xz, 0, 2), (R, :rho, :xy, 1, 2)))
+    for (F, scale, sl, px, py) in panels
         for b in 1:box.n, a in 1:box.n
             v = sl === :xz ? F[a, j0, b] : F[a, b, j0]
-            vv = islog ?
+            vv = scale === :logb ?
                  clamp((log10(max(v, 1e-300)) - (LOGB_HI - 3)) / 3, 0, 1) :
-                 clamp(v / OM_HI, 0, 1)
+                 scale === :om ? clamp(v / OM_HI, 0, 1) :
+                 clamp(v / RHO_HI, 0, 1)
             c = FractalToroid._colormap(vv)
             for dj in 1:UP, di in 1:UP
                 col = px * (npx + GAP) + (a - 1) * UP + di
@@ -235,18 +302,18 @@ end
 const WRITER = Ref{Any}(nothing)
 flush_writer() = (WRITER[] !== nothing && wait(WRITER[]); WRITER[] = nothing)
 
-function emit_frame(B, W, img3d)
+function emit_frame(B, W, R, img3d)
     global nframe
     nf = nframe
     if img3d === nothing
-        render_frame(nf, B, W)
+        render_frame(nf, B, W, R)
         render_frame3d(nf, volume_render(W, B, box; res = 448, chi = OM_HI,
                                          azim = 0.6, elev = 0.45))
         dump_volumes(nf, B, W)
     else
         flush_writer()
         WRITER[] = Threads.@spawn begin
-            render_frame(nf, B, W)
+            render_frame(nf, B, W, R)
             render_frame3d(nf, img3d)
             dump_volumes(nf, B, W)
         end
@@ -273,7 +340,7 @@ if !RESUME
           """{"n": $(box.n), "fields": ["B", "W"],
               "B": {"scale": "log10", "lo": $(LOGB_HI - 3.5), "hi": $LOGB_HI},
               "W": {"scale": "linear", "lo": 0.0, "hi": $OM_HI}}""")
-    emit_frame(_bmag(), _omag(), nothing)
+    emit_frame(_bmag(), _omag(), RHO_PANELS ? sim.S[MRHO] : nothing, nothing)
 end
 write(joinpath(@__DIR__, "..", "out", "v2", "CURRENT"), "$(SCEN)_N$(NGRID)")
 
@@ -290,6 +357,7 @@ try
                 Bf, Wf, J2f, img3d =
                     MHDCuda.frame_render_products!(GSIM, sim; chi = OM_HI)
                 m, T, ekin, emag = MHDCuda.gpu_frame_scalars!(GSIM, sim)
+                Rf = RHO_PANELS ? Float64.(Array(GSIM.S[MRHO])) : nothing
             else
                 Bf = _bmag(); Wf = _omag()
                 Jx, Jy, Jz = curl_central(sim.S[MBX], sim.S[MBY], sim.S[MBZ],
@@ -299,6 +367,7 @@ try
                 ekin = mhd_kinetic_energy(sim)
                 emag = mhd_magnetic_energy(sim)
                 img3d = nothing
+                Rf = RHO_PANELS ? sim.S[MRHO] : nothing
             end
             spec = azimuthal_spectrum(J2f, box, R)
             rel = spec[2:end] ./ max(spec[1], 1e-30)
@@ -311,7 +380,7 @@ try
             push!(rows, join((round(sim.t, digits = 3), ekin, emag,
                               m[3], sqrt(sum(abs2, T)), T[3],
                               mmax, rel[mmax], jsq, jmax), ","))
-            emit_frame(Bf, Wf, img3d)
+            emit_frame(Bf, Wf, Rf, img3d)
             tnext += FRAME_DT
         end
     end
