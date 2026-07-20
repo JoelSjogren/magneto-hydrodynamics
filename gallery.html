@@ -90,7 +90,8 @@ function card(entry) {
   div.className = 'card';
   const vid = document.createElement('video');
   vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = 'metadata';
-  vid.src = `out/videos/${entry.file}.mp4`;
+  // thumbnail plays the 3D volume render when one exists, else the 2D panel
+  vid.src = `out/videos/${entry.file}${entry.d3 ? '_3d' : ''}.mp4`;
   div.appendChild(vid);
   const cap = document.createElement('div');
   cap.className = 'cap';
@@ -118,8 +119,7 @@ for (const sec of SECTIONS) {
   const grid = document.createElement('div');
   grid.className = 'grid';
   for (const entry of sec.cards) {
-    // 3D card shown by default; 2D + 3D links both offered under it
-    const { div, vid } = card({ ...entry, file: entry.d3 ? entry.file + '_3d' : entry.file });
+    const { div, vid } = card(entry);
     grid.appendChild(div);
     observer.observe(vid);
   }
