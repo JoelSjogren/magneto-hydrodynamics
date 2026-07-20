@@ -248,30 +248,15 @@ distribution so the run starts near self-consistency.
   around the object — does anything monopole-*looking* ($B_r \sim 1/r^2$ over
   a shell) appear?
 
-## 4. Numerical plan
+## 4. Numerical plan (v1, historical)
 
-Discretization: Yee-grid FDTD for Maxwell (exactly preserves ∇·B = 0),
-finite-volume/upwind for the fluid on the same grid, CPML absorbing
-boundaries. Memory per cell ≈ 10 floats (E, B, n, u) → a 512³ FP32 grid is
-~5.4 GB: **fits the GTX 1080's 8 GB**, with 384³ comfortable. Pascal (sm_61)
-has 1:32 FP64 throughput, so we stay FP32 (with FP64 reductions for
-diagnostics), and pin CUDA ≤ 12.x (CUDA 13 dropped Pascal).
-
-Phases:
-
-1. **Geometry + magnetostatics** (CPU): fractal-curve generator, Biot–Savart
-   field of the frozen coil; reproduce the FTM field morphology; compute
-   dipole vs. anapole content vs. depth k.
-2. **Vacuum FDTD**: prescribed (non-self-consistent) current pulse through the
-   fractal coil; measure how radiation escape varies with k.
-3. **Self-consistent Euler–Maxwell**: release the fluid; watch relaxation
-   (helicity-conserving?), measure τ(k), f-dependence, u₀-dependence.
-4. **CUDA port** of phase 3 for the GTX 1080; parameter scans.
-
-Language: **Julia** is the recommended starting point — phases 1–3 in plain
-Julia, then the same kernels moved to GPU via CUDA.jl without a rewrite.
-Fallback/alternative for maximum control: C++ with CUDA. (Rust is viable but
-its GPU story adds friction for stencil codes.)
+v1 was planned and built in phases — (1) coil geometry + magnetostatics,
+(2) vacuum FDTD with a prescribed current, (3) the self-consistent
+Euler–Maxwell system of §3.2 — on a Yee-grid FDTD + finite-volume cold-fluid
+solver, in Julia. A planned phase-4 CUDA port never happened: v2's MHD
+reformulation (§7) got the GPU port instead, and the cold-plasma model was
+superseded. Phases 1–3 were completed (§4a; results in `LOGBOOK.md`); the
+equations of §3.2 remain as the record of what v1 actually solved.
 
 ## 4a. Implementation status
 
