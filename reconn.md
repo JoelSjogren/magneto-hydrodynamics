@@ -120,7 +120,8 @@ our 64³ run already reproduces the mid-plane current layer and merge (see
 ## 6. Results — spontaneous-anapole campaign (2026-07-19)
 
 GPU runs at 96³–256³ on the `limnickels`, `counterhel`, and `opposed`
-scenarios (full numbers and discussion in README §7.6). Headline:
+scenarios (full numbers and discussion in `LOGBOOK.md` § "v2: first
+results"). Headline:
 
 - **The anapole persists and saturates.** `limnickels` |T| holds flat at
   ~9.4×10⁻⁴ (192³) from t≈24 to t=36 while kinetic and magnetic energy decay
@@ -148,7 +149,8 @@ scenarios (full numbers and discussion in README §7.6). Headline:
   a bigger box (more room before the sponge) sustains growth for longer —
   domain size is a genuine physical lever on how long the persistence phase
   lasts, not merely a source of one grid-locked resonance. Whether the
-  large-domain run eventually also decays is untested (README §7.7).
+  large-domain run eventually also decays is untested as of the last write-up
+  (`LOGBOOK.md` § "v2: first results").
 - **Haphazard (non-axisymmetric) initial conditions organize a much
   stronger, but still decaying, anapole.** The `random` scenario (band-limited
   random flow + weak random seed field, no ring geometry) peaks at
@@ -156,7 +158,7 @@ scenarios (full numbers and discussion in README §7.6). Headline:
   1.2×10⁻² by t=36, still 15–25× every ring-collision final value. Its
   azimuthal mode is m=1, not the grid-locked m=4 every axisymmetric IC
   shows — direct evidence the m=4 "ring count" was a grid artifact, not
-  physical (README §7.9).
+  physical (`LOGBOOK.md` § "v2: haphazard initial conditions").
 
 ![v2 scenarios, 192³ — initial conditions (top, t = 0) vs evolved (bottom,
 t = 12); 3D volume render (opacity = |B|, colour = |ω|). Similar two-ring
