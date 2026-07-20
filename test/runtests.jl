@@ -125,3 +125,4 @@ end
     @test length(bytes) > 100
 end
 include("mhd_tests.jl")
+include("gpe_tests.jl")

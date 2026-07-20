@@ -25,7 +25,10 @@ export Curve, fractal_coil, segments, frames, npoints,
        curl_central, grid_moments, azimuthal_spectrum,
        checkpoint_save, checkpoint_load!,
        add_flux_ring!, add_vortex_ring!,
-       volume_render
+       volume_render,
+       GR, GI, GPH, GPP, GAX, GAY, GAZ, GQX, GQY, GQZ,
+       GPESim, gpe_step!, gpe_norm, gpe_energy, gpe_neutralize!,
+       gpe_uniform!, gpe_packet!, gpe_vortex_pair!, gpe_winding
 
 include("geometry.jl")
 include("fields.jl")
@@ -33,6 +36,7 @@ include("png.jl")
 include("yee.jl")
 include("fluid.jl")
 include("mhd.jl")
+include("gpe.jl")
 include("volren.jl")
 include("diagnostics.jl")
 
