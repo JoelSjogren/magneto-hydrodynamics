@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>magneto-hydrodynamics — video gallery</title>
+<style>
+  body { font-family: sans-serif; margin: 0; background: #14161a; color: #d8dce2; }
+  header { padding: 10px 18px; background: #1c1f26; display: flex; gap: 16px;
+           align-items: baseline; flex-wrap: wrap; position: sticky; top: 0;
+           z-index: 1; }
+  header a { color: #7ab7ff; text-decoration: none; }
+  header a:hover { text-decoration: underline; }
+  main { padding: 18px; max-width: 1400px; margin: 0 auto; }
+  h2 { color: #aeb6c2; font-size: 16px; margin: 28px 0 10px; font-weight: 600;
+       border-bottom: 1px solid #262a33; padding-bottom: 6px; }
+  h2:first-of-type { margin-top: 4px; }
+  .muted { color: #9aa3b0; font-size: 12.5px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 14px; }
+  .card { background: #1c1f26; border-radius: 8px; padding: 10px; }
+  .card video { width: 100%; border-radius: 4px; background: #000; display: block; }
+  .card .cap { margin-top: 8px; font-size: 12.5px; }
+  .card .label { color: #d8dce2; font-weight: 600; }
+  .card .meta { color: #9aa3b0; }
+  .card .links a { color: #7ab7ff; text-decoration: none; margin-right: 10px; }
+  .card .links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header>
+  <b>video gallery</b>
+  <a href="preview.html">README</a>
+  <a href="preview.html?file=LOGBOOK.md">logbook</a>
+  <a href="preview.html?file=reconn.md">reconnection catalogue</a>
+  <a href="out/videos/">raw files</a>
+  <a href="dashboard.html">live dashboard</a>
+</header>
+<main id="main">
+<p class="muted">All rendered animations in the repo, grouped by campaign.
+Videos autoplay (muted, looped) only while scrolled into view. Full numbers
+and discussion in <code>LOGBOOK.md</code>.</p>
+</main>
+<script>
+const SECTIONS = [
+{ title: "v1 — phase 3, ball-mode relaxation (τ vs fractal nesting k)",
+  cards: [
+    { label: "k = 0, bare ring — τ ≈ 276/ω_p", file: "phase3_k0_ball" },
+    { label: "k = 1, 16-turn coil — τ ≈ 125/ω_p", file: "phase3_k1_ball" },
+    { label: "k = 2, coil of coils — τ ≈ 74/ω_p", file: "phase3_k2_ball" },
+    { label: "k = 0, 144³", file: "phase3_N144_k0_ball" },
+    { label: "k = 1, 144³", file: "phase3_N144_k1_ball" },
+    { label: "k = 2, 144³", file: "phase3_N144_k2_ball" },
+    { label: "k = 0, 96³", file: "phase3_N96_k0_ball" },
+  ]},
+{ title: "v2 — scenario suite across resolution (limnickels / counterhel / opposed)",
+  cards: [
+    { label: "limnickels, 64³", file: "v2_limnickels_N64", d3: true },
+    { label: "limnickels, 96³", file: "v2_limnickels_N96", d3: true },
+    { label: "limnickels, 144³", file: "v2_limnickels_N144", d3: true },
+    { label: "limnickels, 192³ (canonical)", file: "v2_limnickels_N192", d3: true },
+    { label: "counterhel, 64³", file: "v2_counterhel_N64" },
+    { label: "counterhel, 96³", file: "v2_counterhel_N96", d3: true },
+    { label: "opposed, 64³", file: "v2_opposed_N64" },
+  ]},
+{ title: "v2 — domain-size test: limnickels, half=4 (t = 0→84)",
+  cards: [
+    { label: "limnickels, 192³, half=4 — peaks t≈69, decays slowly", file: "v2_limnickels_N192_half4.0", d3: true },
+  ]},
+{ title: "v2 — ULTR cavitation-collapse (bubble / bubble2)",
+  cards: [
+    { label: "bubble, 192³ (canonical, seed 1234)", file: "v2_bubble_N192_half3.0", d3: true },
+    { label: "bubble, 192³, seed 2", file: "v2_bubble_N192_half3.0_seed2", d3: true },
+    { label: "bubble, 192³, seed 3", file: "v2_bubble_N192_half3.0_seed3", d3: true },
+    { label: "bubble, 256³", file: "v2_bubble_N256_half3.0", d3: true },
+    { label: "bubble2, 192³ (canonical)", file: "v2_bubble2_N192_half3.0", d3: true },
+    { label: "bubble2, 192³, seed 2", file: "v2_bubble2_N192_half3.0_seed2", d3: true },
+    { label: "bubble2, 256³", file: "v2_bubble2_N256_half3.0", d3: true },
+  ]},
+{ title: "v2 — haphazard initial conditions (random)",
+  cards: [
+    { label: "random, 192³ — m=1 breakup, not the grid's m=4", file: "v2_random_N192", d3: true },
+  ]},
+];
+
+const main = document.getElementById('main');
+
+function card(entry) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  const vid = document.createElement('video');
+  vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = 'metadata';
+  vid.src = `out/videos/${entry.file}.mp4`;
+  div.appendChild(vid);
+  const cap = document.createElement('div');
+  cap.className = 'cap';
+  const links = entry.d3
+    ? `<span class="links"><a href="out/videos/${entry.file}.mp4">2D panel</a>` +
+      `<a href="out/videos/${entry.file}_3d.mp4">3D volume</a></span>`
+    : `<span class="links"><a href="out/videos/${entry.file}.mp4">full quality</a></span>`;
+  cap.innerHTML = `<div class="label">${entry.label}</div>${links}`;
+  div.appendChild(cap);
+  return { div, vid, entry };
+}
+
+const observer = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    const vid = e.target;
+    if (e.isIntersecting) vid.play().catch(() => {});
+    else vid.pause();
+  }
+}, { threshold: 0.25 });
+
+for (const sec of SECTIONS) {
+  const h2 = document.createElement('h2');
+  h2.textContent = sec.title;
+  main.appendChild(h2);
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  for (const entry of sec.cards) {
+    // 3D card shown by default; 2D + 3D links both offered under it
+    const { div, vid } = card({ ...entry, file: entry.d3 ? entry.file + '_3d' : entry.file });
+    grid.appendChild(div);
+    observer.observe(vid);
+  }
+  main.appendChild(grid);
+}
+</script>
+</body>
+</html>

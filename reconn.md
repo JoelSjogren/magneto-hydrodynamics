@@ -148,9 +148,12 @@ results"). Headline:
   anapole usually forms then decays within the accessible time window, and
   a bigger box (more room before the sponge) sustains growth for longer —
   domain size is a genuine physical lever on how long the persistence phase
-  lasts, not merely a source of one grid-locked resonance. Whether the
-  large-domain run eventually also decays is untested as of the last write-up
-  (`LOGBOOK.md` § "v2: first results").
+  lasts, not merely a source of one grid-locked resonance. **Follow-up:**
+  extended to t=84 — it does eventually turn over too (peak 8.42×10⁻⁴ at
+  t≈69, 3–4× later and ~2× larger than the small-domain peak), but decays
+  ~4× more slowly afterward than the small box does. Domain size delays the
+  peak, raises it, and slows the subsequent decay — three faces of the same
+  boundary effect (`LOGBOOK.md` § "v2: first results").
 - **Haphazard (non-axisymmetric) initial conditions organize a much
   stronger, but still decaying, anapole.** The `random` scenario (band-limited
   random flow + weak random seed field, no ring geometry) peaks at

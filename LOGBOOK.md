@@ -189,6 +189,22 @@ and decay too, on a longer boundary-crossing time?) is untested as of the
 night this was written — **see the "domain test, continued" entry below for
 the extended-time result.**
 
+**Domain test, continued (2026-07-20 day): it does eventually decay, but far
+more gently than the small domain.** Extended the same half=4 run to t=60
+then t=84. |T| keeps climbing well past the t=36 value, **peaking at
+8.42×10⁻⁴ at t≈69** — 3–4× later and ~2× larger than the half=2/96³ peak
+(4.1×10⁻⁴ around t≈12–21) — then turns over and declines to 8.24×10⁻⁴ by
+t=84: a real peak-and-decay, so the small-domain pattern is universal after
+all, but the decay itself is dramatically slower. In the small box, |T| falls
+~4× in the ~16 time units after its peak; in the large box it has fallen
+only ~2% in the 15 time units after its peak. So the fuller picture is:
+domain size delays *when* the anapole peaks, increases *how large* it gets,
+and slows *how fast* it decays afterward — three effects of the same cause
+(more room before the field reaches the absorbing boundary), not a
+plateau-vs-decay dichotomy. The 337-frame full run (t=0→84):
+[2D panel](out/videos/v2_limnickels_N192_half4.0.mp4) ·
+[3D volume render](out/videos/v2_limnickels_N192_half4.0_3d.mp4).
+
 ![v2 scenarios, 192³ — initial conditions (top row, t = 0) vs evolved state
 (bottom row, t = 12); 3D volume render, opacity = |B|, colour = |ω|. The
 three start as similar two-ring configurations but diverge: counterhel keeps
