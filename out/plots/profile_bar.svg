@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="400" font-family="sans-serif">
+<rect width="760" height="400" fill="#fcfcfb"/>
+<text x="380" y="24" text-anchor="middle" font-size="16" fill="#0b0b0b">Per-frame component times, physics vs diagnostics vs I/O</text>
+<text x="380" y="42" text-anchor="middle" font-size="12" fill="#898781">256³ limnickels, GTX 1080 FP64 — each component, log scale</text>
+<line x1="247.7294023189039" y1="56" x2="247.7294023189039" y2="360" stroke="#e1e0d9"/>
+<text x="247.7294023189039" y="380" text-anchor="middle" font-size="11" fill="#898781">10^-1</text>
+<line x1="306.6252019876319" y1="56" x2="306.6252019876319" y2="360" stroke="#e1e0d9"/>
+<text x="306.6252019876319" y="380" text-anchor="middle" font-size="11" fill="#898781">10^0</text>
+<line x1="365.52100165635994" y1="56" x2="365.52100165635994" y2="360" stroke="#e1e0d9"/>
+<text x="365.52100165635994" y="380" text-anchor="middle" font-size="11" fill="#898781">10^1</text>
+<line x1="424.41680132508793" y1="56" x2="424.41680132508793" y2="360" stroke="#e1e0d9"/>
+<text x="424.41680132508793" y="380" text-anchor="middle" font-size="11" fill="#898781">10^2</text>
+<line x1="483.312600993816" y1="56" x2="483.312600993816" y2="360" stroke="#e1e0d9"/>
+<text x="483.312600993816" y="380" text-anchor="middle" font-size="11" fill="#898781">10^3</text>
+<line x1="542.2084006625439" y1="56" x2="542.2084006625439" y2="360" stroke="#e1e0d9"/>
+<text x="542.2084006625439" y="380" text-anchor="middle" font-size="11" fill="#898781">10^4</text>
+<line x1="601.1042003312721" y1="56" x2="601.1042003312721" y2="360" stroke="#e1e0d9"/>
+<text x="601.1042003312721" y="380" text-anchor="middle" font-size="11" fill="#898781">10^5</text>
+<line x1="660.0" y1="56" x2="660.0" y2="360" stroke="#e1e0d9"/>
+<text x="660.0" y="380" text-anchor="middle" font-size="11" fill="#898781">10^6</text>
+<rect x="230.0" y="64.68571428571428" width="399.58817144507066" height="26.057142857142857" rx="3" fill="#2a78d6"/>
+<text x="220" y="81.71428571428571" text-anchor="end" font-size="12" fill="#0b0b0b">GPU physics stepping (~101 steps)</text>
+<text x="637.5881714450707" y="81.71428571428571" font-size="12" fill="#52514e">305000.0 ms</text>
+<rect x="230.0" y="108.11428571428571" width="227.75328483686883" height="26.057142857142857" rx="3" fill="#eb6834"/>
+<text x="220" y="125.14285714285714" text-anchor="end" font-size="12" fill="#0b0b0b">frame_products (curls, |B|/|ω|, volren)</text>
+<text x="465.75328483686883" y="125.14285714285714" font-size="12" fill="#52514e">368.0 ms</text>
+<rect x="230.0" y="151.54285714285714" width="174.30320144612074" height="26.057142857142857" rx="3" fill="#eb6834"/>
+<text x="220" y="168.57142857142858" text-anchor="end" font-size="12" fill="#0b0b0b">frame_scalars (moments, energies)</text>
+<text x="412.30320144612074" y="168.57142857142858" font-size="12" fill="#52514e">45.6 ms</text>
+<rect x="230.0" y="194.9714285714286" width="15.034478321498653" height="26.057142857142857" rx="3" fill="#eb6834"/>
+<text x="220" y="212.00000000000003" text-anchor="end" font-size="12" fill="#0b0b0b">azimuthal spectrum (CPU)</text>
+<text x="253.03447832149865" y="212.00000000000003" font-size="12" fill="#52514e">0.09 ms</text>
+<rect x="230.0" y="238.4" width="224.0879564693953" height="26.057142857142857" rx="3" fill="#eb6834"/>
+<text x="220" y="255.42857142857144" text-anchor="end" font-size="12" fill="#0b0b0b">2D panel render (CPU)</text>
+<text x="462.0879564693953" y="255.42857142857144" font-size="12" fill="#52514e">319.0 ms</text>
+<rect x="230.0" y="281.8285714285714" width="165.71595914924876" height="26.057142857142857" rx="3" fill="#008300"/>
+<text x="220" y="298.85714285714283" text-anchor="end" font-size="12" fill="#0b0b0b">PNG encode (panel + 3D)</text>
+<text x="403.71595914924876" y="298.85714285714283" font-size="12" fill="#52514e">32.6 ms</text>
+<rect x="230.0" y="325.25714285714287" width="221.13785351369216" height="26.057142857142857" rx="3" fill="#008300"/>
+<text x="220" y="342.2857142857143" text-anchor="end" font-size="12" fill="#0b0b0b">volume dump (uint8, raycaster)</text>
+<text x="459.13785351369216" y="342.2857142857143" font-size="12" fill="#52514e">284.0 ms</text>
+<line x1="230" y1="360" x2="660" y2="360" stroke="#898781"/>
+<text x="445" y="392" text-anchor="middle" font-size="12" fill="#52514e">milliseconds per frame (log scale)</text>
+</svg>

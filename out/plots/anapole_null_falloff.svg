@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="460" font-family="sans-serif">
+<rect width="720" height="460" fill="#fcfcfb"/>
+<text x="360" y="24" text-anchor="middle" font-size="16" fill="#0b0b0b">The anapole coil's far field vs far potential (k1r: 16-turn coil + counter-loop, |m| ≈ 0)</text>
+<text x="360" y="42" text-anchor="middle" font-size="12" fill="#898781">|B| falls off faster than |A| — the field cancels more completely than the potential</text>
+<line x1="74" y1="381.04473385536835" x2="696" y2="381.04473385536835" stroke="#e1e0d9"/>
+<text x="66" y="385.04473385536835" text-anchor="end" font-size="11" fill="#898781">1e-6</text>
+<line x1="74" y1="318.6869043496585" x2="696" y2="318.6869043496585" stroke="#e1e0d9"/>
+<text x="66" y="322.6869043496585" text-anchor="end" font-size="11" fill="#898781">1e-5</text>
+<line x1="74" y1="256.32907484394866" x2="696" y2="256.32907484394866" stroke="#e1e0d9"/>
+<text x="66" y="260.32907484394866" text-anchor="end" font-size="11" fill="#898781">1e-4</text>
+<line x1="74" y1="193.97124533823873" x2="696" y2="193.97124533823873" stroke="#e1e0d9"/>
+<text x="66" y="197.97124533823873" text-anchor="end" font-size="11" fill="#898781">1e-3</text>
+<line x1="74" y1="131.61341583252886" x2="696" y2="131.61341583252886" stroke="#e1e0d9"/>
+<text x="66" y="135.61341583252886" text-anchor="end" font-size="11" fill="#898781">1e-2</text>
+<line x1="74" y1="69.25558632681901" x2="696" y2="69.25558632681901" stroke="#e1e0d9"/>
+<text x="66" y="73.25558632681901" text-anchor="end" font-size="11" fill="#898781">1e-1</text>
+<line x1="507.8447993207919" y1="60" x2="507.8447993207919" y2="408" stroke="#e1e0d9"/>
+<text x="507.8447993207919" y="426" text-anchor="middle" font-size="11" fill="#898781">1e1</text>
+<rect x="74" y="60" width="622" height="348" fill="none" stroke="#898781"/>
+<text x="385" y="450" text-anchor="middle" font-size="13" fill="#52514e">distance from coil center r / R0  (log)</text>
+<text x="18" y="234" text-anchor="middle" font-size="13" fill="#52514e" transform="rotate(-90 18 234)">field / potential magnitude  (log)</text>
+<polyline points="74.0,124.9 99.9,160.5 125.8,176.3 151.8,187.2 177.7,197.3 203.6,207.2 229.5,216.9 255.4,226.4 281.3,235.9 307.2,245.3 333.2,254.6 359.1,263.9 385.0,273.2 410.9,282.5 436.8,291.8 462.7,301.0 488.7,310.2 514.6,319.5 540.5,328.7 566.4,337.9 592.3,347.1 618.3,356.4 644.2,365.6 670.1,374.8 696.0,384.0" fill="none" stroke="#2a78d6" stroke-width="2.5"/>
+<line x1="86" y1="78" x2="114" y2="78" stroke="#2a78d6" stroke-width="3"/>
+<text x="120" y="82" font-size="12" fill="#0b0b0b">shell-mean |B|</text>
+<polyline points="74.0,84.0 99.9,94.2 125.8,104.1 151.8,113.8 177.7,123.3 203.6,132.7 229.5,142.1 255.4,151.4 281.3,160.6 307.2,169.8 333.2,179.0 359.1,188.2 385.0,197.3 410.9,206.3 436.8,215.4 462.7,224.3 488.7,233.3 514.6,242.1 540.5,250.9 566.4,259.5 592.3,268.1 618.3,276.6 644.2,284.9 670.1,293.1 696.0,301.1" fill="none" stroke="#e34948" stroke-width="2.5"/>
+<line x1="86" y1="96" x2="114" y2="96" stroke="#e34948" stroke-width="3"/>
+<text x="120" y="100" font-size="12" fill="#0b0b0b">shell-mean |A| (Coulomb gauge)</text>
+</svg>

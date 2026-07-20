@@ -112,9 +112,9 @@ our 64³ run already reproduces the mid-plane current layer and merge (see
 
 | Catalogue phenomenon | v2 diagnostic | Seen so far |
 |---|---|---|
-| Necklace of secondary rings | azimuthal mode spectrum at the collision annulus | noise-seeded collision does break up azimuthally, but the dominant mode is grid-dependent — m=4 (192³), m=4/8 flicker (256³), m=8/12 (opposed), all harmonics of the grid's 4-fold symmetry; not yet a physical count (§6) |
+| Necklace of secondary rings | azimuthal mode spectrum at the collision annulus | noise-seeded collision does break up azimuthally, but the dominant mode is grid-dependent — m=4 (192³), m=4/8 flicker (256³), m=8/12 (opposed), all harmonics of the grid's 4-fold symmetry; not yet a physical count (§6). Confirmed as a symmetry artifact, not physical: the haphazard-IC `random` scenario (no axisymmetric IC to lock to the grid) shows **m=1**, not m=4 (§6) |
 | Iterated cascade (rings³) | mode spectrum vs time + frame videos | — |
-| Writhe→twist helicity flow | anapole (toroidal) moment |T|(t) — zero for a plain ring, nonzero for coil-of-coils winding | machine zero pre-noise; **noise-seeded collision grows an anapole (peak ~4×10⁻⁴, strength ∝ vortex drive) that then DECAYS at 96/128/256³; the 192³ plateau (9.4×10⁻⁴) is a lone outlier/artifact — no real persistence (§6)** |
+| Writhe→twist helicity flow | anapole (toroidal) moment |T|(t) — zero for a plain ring, nonzero for coil-of-coils winding | machine zero pre-noise; **noise-seeded collision grows an anapole (peak ~4×10⁻⁴, strength ∝ vortex drive) that then DECAYS at 96/128/256³; the 192³ plateau (9.4×10⁻⁴) is a lone outlier at that resolution, BUT a same-resolution/larger-domain test (half=4) shows monotonic growth past that plateau value with no decay by t=36 — domain size genuinely modulates persistence, not just a one-off resonance (§6)** |
 | Counter-helicity merge → FRC | mid-plane current sheet, m_z survival | reproduced at 64³ |
 
 ## 6. Results — spontaneous-anapole campaign (2026-07-19)
@@ -133,16 +133,30 @@ scenarios (full numbers and discussion in README §7.6). Headline:
   1.6×10⁻⁴. Generic to the two-ring geometry, but a vortex-collision effect,
   not a magnetic one (counterhel has the strongest fields, the weakest
   anapole).
-- **The plateau is a 192³ artifact; the anapole peaks then decays.** Full
-  ladder (peak|T| / t=36, ×10⁻⁴): 96³ 4.1/2.9, 128³ 4.7/2.8, 192³ 9.4/9.4,
-  256³ 4.0/1.8. Three of four grids agree — peak ~4×10⁻⁴ then decay; only
-  192³ plateaus, at double the peak. So it is a lone outlier, most likely a
-  grid/box/ring resonance in the r²-weighted (outer-dominated) anapole, where
-  the boundary stamps a 4-fold pattern on the field. The anapole forms and
-  decays; it does not persist. A larger-domain (half=4) run will confirm the
-  boundary's role. A 192³ seed ensemble shows the magnitude is seed-dominated:
-  seeds 2/3 peak at 2–3×10⁻⁴ (seed 3 decays) vs the canonical 9.4×10⁻⁴, so
-  seed 1234 was a seed outlier too.
+- **The plateau is a 192³/half=2 artifact; the anapole usually peaks then
+  decays — but domain size is a real control knob, not just a resonance.**
+  Full half=2 ladder (peak|T| / t=36, ×10⁻⁴): 96³ 4.1/2.9, 128³ 4.7/2.8,
+  192³ 9.4/9.4, 256³ 4.0/1.8. Three of four grids agree — peak ~4×10⁻⁴ then
+  decay; only 192³ plateaus, at double the peak. A 192³ seed ensemble shows
+  the magnitude is seed-dominated: seeds 2/3 peak at 2–3×10⁻⁴ (seed 3
+  decays) vs the canonical 9.4×10⁻⁴, so seed 1234 was a seed outlier too.
+  But a same-resolution, doubled-domain follow-up (`half=4`, dx matching the
+  96³/half=2 ladder point) does *not* decay by t=36 — it climbs
+  monotonically past the small-domain's peak, to 7.1×10⁻⁴ and still rising,
+  while energies are still actively falling. So the honest summary is: the
+  anapole usually forms then decays within the accessible time window, and
+  a bigger box (more room before the sponge) sustains growth for longer —
+  domain size is a genuine physical lever on how long the persistence phase
+  lasts, not merely a source of one grid-locked resonance. Whether the
+  large-domain run eventually also decays is untested (README §7.7).
+- **Haphazard (non-axisymmetric) initial conditions organize a much
+  stronger, but still decaying, anapole.** The `random` scenario (band-limited
+  random flow + weak random seed field, no ring geometry) peaks at
+  5.6×10⁻² by t≈2.75 — ~60× any two-ring scenario — then decays ~4.5× to
+  1.2×10⁻² by t=36, still 15–25× every ring-collision final value. Its
+  azimuthal mode is m=1, not the grid-locked m=4 every axisymmetric IC
+  shows — direct evidence the m=4 "ring count" was a grid artifact, not
+  physical (README §7.9).
 
 ![v2 scenarios, 192³ — initial conditions (top, t = 0) vs evolved (bottom,
 t = 12); 3D volume render (opacity = |B|, colour = |ω|). Similar two-ring

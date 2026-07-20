@@ -671,6 +671,26 @@ persistence is an outlier/artifact. No converged magnitude or sub-ring count
 is established, and the domain likely biases the outer, anapole-dominant
 region.
 
+**Domain test (2026-07-19/20 night): the boundary controls persistence more
+than "artifact" implied.** `limnickels 192 36 gpu half=4` — same resolution
+as the 96³/half=2 ladder point (dx = 0.0417) but a domain twice as wide —
+was run to test whether moving the sponge away kills the 192³/half=2 plateau.
+Result is more interesting than a clean confirm/deny: |T| does **not**
+plateau (unlike 192³/half=2) but it also does **not** peak-and-decay like
+every half=2 grid did (96³/128³/256³) — it climbs *monotonically* through
+the whole run, reaching 7.1×10⁻⁴ at t=36 and still rising, while E_kin and
+E_mag are still actively falling (no quasi-steady state reached). At the
+*same resolution*, the small box (half=2, 96³) peaks by t≈20 and decays to
+2.9×10⁻⁴ by t=36; the large box (half=4, 192³) is still growing past that
+value at t=36. So domain size is a real control knob on the persistence
+question, not just a source of a single resonant artifact — a field with
+more room before it reaches the absorbing boundary keeps organizing for
+longer. What happens beyond t=36 in the larger box (does it eventually peak
+and decay too, on a longer boundary-crossing time?) is untested — out of
+tonight's budget. The azimuthal mode stays locked at m=4 throughout,
+confirming that particular artifact is a cubic-grid harmonic independent of
+domain size, not a boundary effect.
+
 ![v2 scenarios, 192³ — initial conditions (top row, t = 0) vs evolved state
 (bottom row, t = 12); 3D volume render, opacity = |B|, colour = |ω|. The
 three start as similar two-ring configurations but diverge: counterhel keeps
@@ -691,6 +711,100 @@ magnetic-loop advection (∇·B control), hydrodynamic vortex-ring
 self-propagation, and the counter-helicity merging → FRC phenomenology
 check. Same GPU trajectory as v1 (the 8-field cell-centered layout is, if
 anything, more CUDA-friendly than the staggered v1 grid).
+
+### 7.8 ULTR: cavitation-collapse self-assembly (simplified MHD)
+
+Bob Greenyer's ULTR experiment (water + aluminium foil in an ultrasonic
+cleaner) is claimed to form FTMs via cavitation collapse, driven by "charge
+separation + multi-axis hydrodynamic shear + standing waves." The charge
+separation is inaccessible to quasineutral single-fluid MHD (that needs the
+two-fluid/Euler–Maxwell model, `src/fluid.jl` — a v3+ direction); what *is*
+testable now is the mechanism cavitation physics agrees on regardless of
+cause: collapse → re-entrant jet → toroidal vortex ring. Implemented as two
+new `scripts/v2_pathB_selfassembly.jl` scenarios, in a larger domain
+(half=3, since the collapse emits shocks and the ring expands):
+
+- **`bubble`**: a single low-density cavity (ρ_cav = 0.05, isothermal
+  p = c_s²ρ makes it implode under ambient pressure) with a seeded
+  re-entrant jet — a dense "foil" wall can't provide the collapse asymmetry
+  here (it would be *high*-pressure under this EOS and explode outward), so
+  the jet a nearby wall would normally produce is imposed directly.
+- **`bubble2`**: two cavities collapsing side by side, asymmetry from mutual
+  shielding alone, no seeded jet.
+
+Both seed a weak axisymmetric flux ring (E_mag = 0.02, |T|(0) = machine
+zero, same convention as every other scenario) plus 2% velocity noise.
+192³, t = 36:
+
+- The jet punches through the cavity and rolls up into a vortex ring, as
+  cavitation theory predicts — visible in the ρ frame row added for these
+  scenarios (`out/videos/v2_bubble_N192_half3.0.mp4`).
+- **A spontaneous anapole forms here too**, an order of magnitude weaker
+  than the vortex-collision scenarios (peak |T| ~5–9×10⁻⁵ vs ~4–9×10⁻⁴ for
+  limnickels/opposed/counterhel) — consistent with the weaker seed field
+  and gentler kinetic drive. `bubble` (continuously jet-fed) keeps growing
+  through t=36 (8.5×10⁻⁵, still rising); `bubble2` (single collapse, no
+  redrive) saturates by t≈10 and holds (~6×10⁻⁵).
+- Seed scatter (seeds 2, 3 at 192³) stays within a factor ~2.4× of the
+  canonical run (3.6–8.6×10⁻⁵) — tighter than the 4–6× scatter seen in the
+  limnickels campaign. Resolution check (`bubble`/`bubble2` at 256³) agrees
+  with 192³ to within ~2× at matched t. Azimuthal mode is m=4 throughout —
+  the same grid harmonic as every other scenario, not a physical count.
+- Bottom line: the cavitation-collapse mechanism reproduces the textbook
+  jet→ring fluid dynamics, and *also* spontaneously organizes a weak
+  anapole, but weaker than driven vortex collisions and with the same
+  unresolved grid-mode caveat.
+
+### 7.9 Haphazard initial conditions: the `random` scenario
+
+`scripts/v2_pathB_selfassembly.jl random` (committed earlier, run tonight):
+a band-limited random divergence-free velocity field (E_kin = 2.5, k ≤ 3)
+plus a weak random divergence-free seed field (E_mag = 0.05), no imposed
+ring geometry at all — the test of whether coherent toroidal structure
+crystallizes out of pure disorder rather than a symmetric two-ring
+collision. 192³, t = 36:
+
+- |T| grows **very fast and very large** — peaking at 5.6×10⁻² by t≈2.75,
+  ~60× the peak of any two-ring scenario — then decays roughly 4.5× to
+  1.2×10⁻² by t=36, still ~15–25× every ring-collision scenario's final
+  value. Turbulent collapse organizes far more anapole content than a
+  symmetric collision does, at least transiently.
+- The azimuthal mode spectrum is dominated by **m=1**, not the m=4 that
+  every axisymmetric two-ring scenario locks onto — evidence that m=4 really
+  was an artifact of combining an axisymmetric IC with the cubic grid's
+  4-fold symmetry: freed from that symmetry, the grid's preferred mode
+  doesn't win. (m=1 here most likely reads as one off-center dominant
+  clump rather than a "ring of rings," visible in the render — see the
+  scenario-comparison figure below.)
+- The 3D render (`out/videos/v2_random_N192.mp4`) shows a genuinely
+  disordered, space-filling tangle at t=12, in sharp visual contrast to
+  every ring-based scenario's compact torus/pair-of-tori structure.
+
+![Six-scenario comparison, 192³, t=12: 3D volume render (opacity=|B|,
+colour=|ω|). limnickels/counterhel/opposed are the driven two-ring
+collisions; random is the haphazard-IC run (space-filling, no ring
+symmetry); bubble/bubble2 are the ULTR cavitation-collapse
+runs (compact, much dimmer — weaker
+fields).](out/figures/scenario_comparison_N192.png)
+
+### 7.10 Compute profile: physics-bound, not I/O-bound
+
+Where does wall time actually go on a production GPU run? Instrumented
+`limnickels` at 256³ on the GTX 1080, FP64 (`scripts/bench_gpu_profile.jl`,
+mirrors the real per-frame code path): per frame cycle (Δt = 0.25, ~101
+physics steps), GPU stepping takes 304.5 s versus a combined 1.05 s for
+*everything else* — curls/magnitudes/volume-raycast/downloads (0.37 s),
+moment/energy reductions (0.05 s), the CPU azimuthal-spectrum diagnostic
+(0.09 ms), the 2D panel raster (0.32 s), and all file I/O — PNG encodes plus
+the uint8 volume dump for the interactive raycaster (0.32 s). **Physics
+stepping is 99.7% of the wall time**; rendering, diagnostics, and disk I/O
+combined are noise, and the async-writer overlap (commit 458c50f) that
+hides them behind the next stepping stretch was already the right
+optimization target — there is nothing left worth optimizing on the I/O
+side at this grid size.
+
+![Frame-cycle time breakdown, 256³](out/plots/profile_pie.svg)
+![Per-component times, log scale](out/plots/profile_bar.svg)
 
 ## 8. v3 direction (planned): potentials-first, coherent matter
 
@@ -722,3 +836,45 @@ natural and honest way to do this is one construction, not two:
 v1 (kinetic, field-based) and v2 (MHD, field-based) remain as the
 classical control group against which the potentials/coherence
 formulation is compared.
+
+### 8.1 First v3 results (2026-07-19/20 night)
+
+**Experiment (a), the anapole null, quantified** — `scripts/v3_anapole_null.jl`
+computes B and A of the v1 hand-built coil directly from the line current
+(no grid), for the "proper anapole coil" variant that superposes a
+counter-oriented plain ring onto the k=1 coil to cancel the net dipole
+(m drops from 3.24 to 0.096; |T| = 1.56 unchanged). Two measurements:
+
+- **Shell-averaged far field vs far potential.** From r = 1.5 R0 to
+  r = 22.8 R0, |B| falls from 0.0128 to 8.97×10⁻⁷ (a power-law slope
+  ≈ −3.5) while |A| (Coulomb gauge) falls only from 0.058 to 1.91×10⁻⁵
+  (slope ≈ −2.9). The field cancels measurably faster than the potential —
+  the gauge-dependent version of "potentials survive where fields don't."
+- **The gauge-invariant version**: linked flux Φ = ∮A·dl around a loop
+  threading the coil's hole, versus the field on that same loop. Growing
+  the loop from s = 0.7 to s = 16.2 (the loop's far side recedes to
+  ~2s ≈ 32 R0), Φ_link stays flat at −0.51 → −0.50 (2% drift, essentially
+  the tube flux) while the mean |B| sampled on the very same loop falls
+  from 0.31 to 1.2×10⁻⁴ (>2500×) — matched against a same-size, same-distance
+  *non-linking* control loop, whose Φ is at the ~10⁻⁷ numerical floor
+  throughout. This is exactly what an Aharonov–Bohm-sensitive matter-wave
+  probe would read that no magnetometer on the same path would: a
+  quantitative version of Greenyer's "potential wave" claim, and the
+  natural precursor to the coherent-receiver experiment (b).
+
+![Field vs potential falloff](out/plots/anapole_null_falloff.svg)
+![Linked flux vs loop field](out/plots/anapole_null_link.svg)
+
+**GPE groundwork.** `src/gpe.jl` implements the minimally-coupled
+Gross–Pitaevskii condensate + Lorenz-gauge potentials of §8's model:
+`i∂tψ = [(−i∇−qA)²/2m + qφ + g|ψ|²]ψ`, `□φ = q(|ψ|²−n̄)`, `□A = J(ψ)`, on
+the shared SSP-RK3 method-of-lines harness (10 cell-centered fields,
+stdlib-only). Validation suite (`test/gpe_tests.jl`, all passing): free
+wave-packet dispersion matches the analytic σ(t) to <3%; a uniform
+condensate's chemical-potential phase winding µ = gn₀ matches to <0.1%;
+a charged uniform condensate kicked with a uniform **A** oscillates at
+ω_p = 1 (the coherent-matter analogue of the v1/phase-3 Langmuir test,
+crossing zero at t = π/2 to <3%); a vortex–antivortex line pair keeps its
+quantized winding (±1) exactly through evolution, as required
+topologically. This is the substrate the coherent-receiver and
+quantized-toroidal-current experiments (b, c) will run on next.

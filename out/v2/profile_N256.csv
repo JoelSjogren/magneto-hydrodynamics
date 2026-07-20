@@ -1,0 +1,13 @@
+component,ms_per_frame
+step_stretch,304532.27
+frame_products,368.15
+volren_only,39.38
+download_one,132.38
+frame_scalars,45.55
+spectrum_cpu,0.09
+render2d_cpu,319.0
+png_panel,28.08
+png_vol3d,4.48
+voldump,284.25
+checkpoint_once,343.9
+steps_per_frame,101.33
